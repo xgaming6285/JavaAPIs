@@ -43,7 +43,7 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/xgaming6285/JavaAPIs.git
    cd demo
    ```
 
