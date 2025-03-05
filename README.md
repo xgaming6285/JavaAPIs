@@ -82,9 +82,9 @@ Once the application is running, you can access:
 - Grafana Dashboard: `http://localhost:3000` (when running with docker-compose)
 
 ### Health Check
-
+```bash
 curl http://localhost:8080/api/health
-
+```
 ## 🛠️ Technology Stack
 
 - **Spring Boot** - Application framework
