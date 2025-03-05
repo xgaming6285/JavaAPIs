@@ -4,18 +4,25 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.servers.Server;
-import io.swagger.v3.oas.models.Components;
-import io.swagger.v3.oas.models.security.SecurityScheme;
-import io.swagger.v3.oas.models.tags.Tag;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
+/**
+ * OpenAPI configuration class for setting up API documentation.
+ * This class defines the OpenAPI specification for the User Management API,
+ * including server details, contact information, and grouped API paths.
+ */
 @Configuration
 public class OpenAPIConfig {
     
+    /**
+     * Configures the OpenAPI instance with server information and API details.
+     * 
+     * @return OpenAPI instance with configured information.
+     */
     @Bean
     public OpenAPI myOpenAPI() {
         Server devServer = new Server();
@@ -37,6 +44,11 @@ public class OpenAPIConfig {
                 .servers(List.of(devServer));
     }
 
+    /**
+     * Groups the user management APIs for documentation.
+     * 
+     * @return GroupedOpenApi instance for user management APIs.
+     */
     @Bean
     public GroupedOpenApi userApis() {
         return GroupedOpenApi.builder()
@@ -45,6 +57,11 @@ public class OpenAPIConfig {
                 .build();
     }
 
+    /**
+     * Groups the authentication APIs for documentation.
+     * 
+     * @return GroupedOpenApi instance for authentication APIs.
+     */
     @Bean
     public GroupedOpenApi authApis() {
         return GroupedOpenApi.builder()
@@ -53,6 +70,11 @@ public class OpenAPIConfig {
                 .build();
     }
 
+    /**
+     * Groups the health check APIs for documentation.
+     * 
+     * @return GroupedOpenApi instance for health check APIs.
+     */
     @Bean
     public GroupedOpenApi healthApis() {
         return GroupedOpenApi.builder()

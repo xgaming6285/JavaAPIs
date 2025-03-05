@@ -3,19 +3,26 @@ package com.example.demo;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * Data Transfer Object for creating a new user.
+ * This class is used to transfer user data during registration.
+ */
 public class CreateUserDTO {
-    @NotBlank
+    
+    @NotBlank(message = "Username is mandatory")
     private String username;
     
-    @Email
+    @Email(message = "Email should be valid")
     private String email;
     
-    @NotBlank
+    @NotBlank(message = "Password is mandatory")
     private String password;
 
+    // Default constructor
     public CreateUserDTO() {
     }
     
+    // Parameterized constructor
     public CreateUserDTO(String username, String email, String password) {
         this.username = username;
         this.email = email;

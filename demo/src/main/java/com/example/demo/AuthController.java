@@ -9,8 +9,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
     
+    private final UserService userService;
+
     @Autowired
-    private UserService userService;
+    public AuthController(UserService userService) {
+        this.userService = userService; // Constructor injection for better testability
+    }
     
     // Registration endpoint
     @PostMapping("/register")
@@ -21,7 +25,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userDTO);
     }
     
-    // Login endpoint (improved)
+    // Login endpoint
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
         if (userService.verifyUserCredentials(loginRequest.getUsername(), loginRequest.getPassword())) {
