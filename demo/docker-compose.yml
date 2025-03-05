@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+      target: development
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    volumes:
+      - ./src:/app/src
+      - ./pom.xml:/app/pom.xml
+      - ./.mvn:/app/.mvn
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev

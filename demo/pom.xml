@@ -67,9 +67,21 @@
 			<artifactId>resilience4j-spring-boot2</artifactId>
 			<version>1.7.1</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.3.0</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
+		<finalName>api-application</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -24,6 +25,7 @@ public class UserService {
     
     private final Map<String, User> usersByUsername = new HashMap<>();
     private final AtomicLong idCounter = new AtomicLong();
+    private AtomicInteger failureCounter = new AtomicInteger(0);
     
     // Get the list of all users
     public List<User> getAllUsers() {
@@ -85,13 +87,16 @@ public class UserService {
 
     @CircuitBreaker(name = "userService", fallbackMethod = "fallbackGetUserById")
     public User getUserByIdWithCircuitBreaker(Long id) {
+        // Simulate failure every other request
+        if (failureCounter.getAndIncrement() % 2 == 0) {
+            throw new RuntimeException("Simulated service failure");
+        }
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
     
     // Fallback method in case of failure
     public User fallbackGetUserById(Long id, Throwable t) {
-        // Log error and return a default User or a meaningful message
-        return new User("defaultUser", "default@example.com", "defaultPassword");
+        return new User("fallback-user", "fallback@example.com", "fallback-password");
     }
 }
