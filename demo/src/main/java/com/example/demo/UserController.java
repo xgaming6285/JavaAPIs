@@ -152,4 +152,12 @@ public class UserController {
         UserDTO userDTO = new UserDTO(user.getId(), user.getUsername(), user.getEmail()); // Map to UserDTO
         return ResponseEntity.ok(userDTO); // Return user
     }
+    
+    // Endpoint to update user profile
+    @PutMapping("/{id}/profile")
+    public ResponseEntity<UserDTO> updateProfile(@PathVariable Long id, @RequestBody User userDetails) {
+        User updatedUser = userService.updateUser(id, userDetails); // Update user in the service
+        UserDTO userDTO = new UserDTO(updatedUser.getId(), updatedUser.getUsername(), updatedUser.getEmail()); // Map to UserDTO
+        return ResponseEntity.ok(userDTO); // Return updated user
+    }
 }

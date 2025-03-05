@@ -1,6 +1,8 @@
 package com.example.demo;
 
 import jakarta.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User entity representing a user in the system.
@@ -16,6 +18,9 @@ public class User {
     private String username; // Username of the user
     private String email; // Email address of the user
     private String password; // User's password (should be hashed in production)
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> roles = new HashSet<>(); // User roles
 
     // Default constructor
     public User() {}
@@ -67,6 +72,16 @@ public class User {
         this.password = password;
     }
 
+    // Getter for roles
+    public Set<String> getRoles() {
+        return roles;
+    }
+
+    // Setter for roles
+    public void setRoles(Set<String> roles) {
+        this.roles = roles;
+    }
+
     // toString method for representing the User object as a string
     @Override
     public String toString() {
@@ -75,6 +90,7 @@ public class User {
         ", username='" + username + '\'' +
         ", email='" + email + '\'' +
         ", password='" + password + '\'' +
+        ", roles=" + roles +
         '}';
     }
 }

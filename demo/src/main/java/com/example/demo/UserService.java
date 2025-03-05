@@ -7,7 +7,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -24,6 +27,8 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
  */
 @Service
 public class UserService {
+    
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     
     @Autowired
     private UserRepository userRepository; // Repository for user data
@@ -62,7 +67,14 @@ public class UserService {
      * @return the created User object
      */
     public User createUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword())); // Encrypt password
+        // Check if the username already exists
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new RuntimeException("Username already exists"); // Throw an exception if username is taken
+        }
+        user.setRoles(Set.of("ROLE_USER")); // Assign default role
+        String hashedPassword = passwordEncoder.encode(user.getPassword());
+        logger.info("Hashed password for user {}: {}", user.getUsername(), hashedPassword); // Log hashed password
+        user.setPassword(hashedPassword); // Encrypt password
         return userRepository.save(user); // Save user to the repository
     }
     
@@ -134,14 +146,15 @@ public class UserService {
      */
     public User updatePassword(Long id, String oldPassword, String newPassword) {
         User user = userRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("User not found")); // Fetch user or throw exception
-            
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
         // Verify old password
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new RuntimeException("Invalid old password"); // Throw exception if old password is incorrect
+            throw new RuntimeException("Old password is incorrect");
         }
-        
-        user.setPassword(passwordEncoder.encode(newPassword)); // Encrypt and set new password
+
+        // Hash the new password
+        user.setPassword(passwordEncoder.encode(newPassword));
         return userRepository.save(user); // Save updated user
     }
 
