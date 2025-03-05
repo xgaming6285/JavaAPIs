@@ -125,9 +125,16 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the Apache License 2.0 - see [LICENSE](http://www.apache.org/licenses/LICENSE-2.0) for details.
 
+This project is licensed under a custom license - see the [LICENSE](LICENSE) file for details.
+
 ## 📫 Support
 
 For support and questions, please open an issue in the repository.
+
+## 👤 Author
+
+This project is maintained by [Daniel] 
+[dani034406@gmail.com](mailto:dani034406@gmail.com).
 
 ---
 
