@@ -213,4 +213,10 @@ public class UserService {
             .map(user -> passwordEncoder.matches(password, user.getPassword())) // Check if password matches
             .orElse(false); // Return false if user not found
     }
+
+    public Optional<User> getUserByToken(String token) {
+        // Logic to find the user by token (this could involve checking a database or cache)
+        // For example, assuming you have a method in UserRepository to find by token
+        return userRepository.findByToken(token); // Fetch user by token
+    }
 }

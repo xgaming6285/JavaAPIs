@@ -7,6 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import java.util.Optional;
 
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -55,7 +56,15 @@ public class AuthController {
     @GetMapping("/verify")
     public ResponseEntity<String> verifyEmail(@RequestParam String token) {
         // Logic to verify the token and activate the user account
-        return ResponseEntity.ok("Email verified successfully");
+        Optional<User> userOpt = userService.getUserByToken(token); // Fetch user by token
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setActive(true); // Activate the user account
+            userService.updateUser(user.getId(), user); // Save the updated user
+            return ResponseEntity.ok("Email verified successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token"); // Return error response
+        }
     }
 
     @PostMapping("/reset-password")
@@ -71,6 +80,14 @@ public class AuthController {
     @PostMapping("/update-password")
     public ResponseEntity<String> updatePassword(@RequestParam String token, @RequestBody String newPassword) {
         // Logic to verify the token and update the password
-        return ResponseEntity.ok("Password updated successfully");
+        Optional<User> userOpt = userService.getUserByToken(token); // Fetch user by token
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setPassword(passwordEncoder.encode(newPassword)); // Encrypt new password
+            userService.updateUser(user.getId(), user); // Save updated user
+            return ResponseEntity.ok("Password updated successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token"); // Return error response
+        }
     }
 }

@@ -27,4 +27,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return a list of users whose usernames contain the specified string
      */
     List<User> findByUsernameContainingIgnoreCase(String username);
+
+    Optional<User> findByToken(String token);
 }

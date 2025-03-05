@@ -18,6 +18,9 @@ public class User {
     private String username; // Username of the user
     private String email; // Email address of the user
     private String password; // User's password (should be hashed in production)
+    private String token; // Token for email verification
+
+    private boolean active; // Field to indicate if the user is active
 
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> roles = new HashSet<>(); // User roles
@@ -72,6 +75,26 @@ public class User {
         this.password = password;
     }
 
+    // Getter for token
+    public String getToken() {
+        return token;
+    }
+
+    // Setter for token
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    // Getter for active
+    public boolean isActive() {
+        return active;
+    }
+
+    // Setter for active
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     // Getter for roles
     public Set<String> getRoles() {
         return roles;
@@ -90,6 +113,8 @@ public class User {
         ", username='" + username + '\'' +
         ", email='" + email + '\'' +
         ", password='" + password + '\'' +
+        ", token='" + token + '\'' +
+        ", active=" + active +
         ", roles=" + roles +
         '}';
     }
