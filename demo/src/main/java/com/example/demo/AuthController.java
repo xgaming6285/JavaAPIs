@@ -1,3 +1,5 @@
+package com.example.demo;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +21,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userDTO);
     }
     
-    // Login endpoint (simplified)
+    // Login endpoint (improved)
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
         return userService.getUserByUsername(loginRequest.getUsername())

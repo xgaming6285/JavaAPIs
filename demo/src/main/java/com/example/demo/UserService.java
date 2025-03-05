@@ -1,6 +1,11 @@
+package com.example.demo;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -9,22 +14,29 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+
 @Service
 public class UserService {
     
     @Autowired
     private UserRepository userRepository;
     
+    private final Map<String, User> usersByUsername = new HashMap<>();
+    private final AtomicLong idCounter = new AtomicLong();
+    
+    // Get the list of all users
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
     
+    // Cache a user by id. Cache key is the id.
+    @Cacheable(value = "user", key = "#id")
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
     }
     
     public User createUser(User user) {
-        // Add validations, encryption, etc.
         return userRepository.save(user);
     }
     
@@ -69,5 +81,17 @@ public class UserService {
     public CompletableFuture<Optional<User>> getUserByIdAsync(Long id) {
         Optional<User> user = userRepository.findById(id);
         return CompletableFuture.completedFuture(user);
+    }
+
+    @CircuitBreaker(name = "userService", fallbackMethod = "fallbackGetUserById")
+    public User getUserByIdWithCircuitBreaker(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+    
+    // Fallback method in case of failure
+    public User fallbackGetUserById(Long id, Throwable t) {
+        // Log error and return a default User or a meaningful message
+        return new User("defaultUser", "default@example.com", "defaultPassword");
     }
 }

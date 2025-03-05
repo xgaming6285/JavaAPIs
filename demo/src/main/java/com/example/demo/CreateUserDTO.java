@@ -1,5 +1,7 @@
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
+package com.example.demo;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
 public class CreateUserDTO {
     @NotBlank
@@ -10,6 +12,15 @@ public class CreateUserDTO {
     
     @NotBlank
     private String password;
+
+    public CreateUserDTO() {
+    }
+    
+    public CreateUserDTO(String username, String email, String password) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+    }
 
     // Getters and setters
     public String getUsername() {

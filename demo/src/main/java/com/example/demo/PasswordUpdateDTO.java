@@ -1,3 +1,5 @@
+package com.example.demo;
+
 public class PasswordUpdateDTO {
     private String oldPassword;
     private String newPassword;
