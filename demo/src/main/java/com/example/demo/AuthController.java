@@ -1,6 +1,5 @@
 package com.example.demo;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,7 +21,6 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
-    @Autowired
     public AuthController(UserService userService, EmailService emailService, PasswordEncoder passwordEncoder) {
         this.userService = userService; // Constructor injection for better testability
         this.emailService = emailService;
@@ -36,6 +34,7 @@ public class AuthController {
         User newUser = userService.createUser(user);
         logger.info("User created: {}", newUser);
         String token = UUID.randomUUID().toString(); // Generate token
+        userService.saveVerificationToken(newUser.getId(), token); // Save token in cache
         emailService.sendVerificationEmail(newUser.getEmail(), token); // Send verification email
         // Save token in the database or cache for later verification
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserDTO(newUser.getId(), newUser.getUsername(), newUser.getEmail()));
@@ -55,7 +54,6 @@ public class AuthController {
     // New endpoint for email verification
     @GetMapping("/verify")
     public ResponseEntity<String> verifyEmail(@RequestParam String token) {
-        // Logic to verify the token and activate the user account
         Optional<User> userOpt = userService.getUserByToken(token); // Fetch user by token
         if (userOpt.isPresent()) {
             User user = userOpt.get();
@@ -70,20 +68,28 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO resetPasswordRequest) {
         String email = resetPasswordRequest.getEmail(); // Get email from DTO
+        Optional<User> userOpt = userService.getUserByUsername(email); // Check if user exists
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email not found"); // Return error if email doesn't exist
+        }
         String token = UUID.randomUUID().toString(); // Generate reset token
+        userService.saveResetToken(userOpt.get().getId(), token); // Save token in the database
         emailService.sendResetPasswordEmail(email, token); // Send reset password email
-        // Save token in the database or cache for later verification
-        return ResponseEntity.ok("Password reset link sent to your email");
+        return ResponseEntity.ok("Password reset link sent to your email"); // Inform user
     }
 
     // New endpoint for updating the password
     @PostMapping("/update-password")
-    public ResponseEntity<String> updatePassword(@RequestParam String token, @RequestBody String newPassword) {
+    public ResponseEntity<String> updatePassword(@RequestParam String token, @RequestBody PasswordUpdateDTO passwordUpdateDTO) {
         // Logic to verify the token and update the password
         Optional<User> userOpt = userService.getUserByToken(token); // Fetch user by token
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            user.setPassword(passwordEncoder.encode(newPassword)); // Encrypt new password
+            // Verify old password
+            if (!passwordEncoder.matches(passwordUpdateDTO.getOldPassword(), user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Old password is incorrect"); // Return error response
+            }
+            user.setPassword(passwordEncoder.encode(passwordUpdateDTO.getNewPassword())); // Encrypt new password
             userService.updateUser(user.getId(), user); // Save updated user
             return ResponseEntity.ok("Password updated successfully");
         } else {

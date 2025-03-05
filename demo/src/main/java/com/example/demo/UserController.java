@@ -34,7 +34,6 @@ public class UserController {
     private UserService userService; // Service for user-related operations
     
     // Constructor for UserController, initializes the user creation counter
-    @Autowired
     public UserController(MeterRegistry registry) {
         this.userCreationCounter = Counter.builder("api.user.creation")
             .description("Number of users created")

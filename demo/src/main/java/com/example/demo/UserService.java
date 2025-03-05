@@ -1,13 +1,12 @@
 package com.example.demo;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +35,10 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder; // Encoder for user passwords
     
-    private final Map<String, User> usersByUsername = new HashMap<>(); // Cache for users by username
-    private final AtomicLong idCounter = new AtomicLong(); // Counter for generating unique IDs
     private AtomicInteger failureCounter = new AtomicInteger(0); // Counter for simulating failures
+    
+    private final Map<Long, User> userCache = new ConcurrentHashMap<>(); // Cache for users
+    private final Map<Long, String> verificationTokenCache = new ConcurrentHashMap<>(); // Cache for verification tokens
     
     /**
      * Retrieves a list of all users in the system.
@@ -67,8 +67,8 @@ public class UserService {
      * @return the created User object
      */
     public User createUser(User user) {
-        // Check if the username already exists
-        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+        // Check if the username already exists in the cache
+        if (verificationTokenCache.containsKey(user.getId())) {
             logger.warn("Attempt to create user failed: Username {} already exists", user.getUsername()); // Log warning
             throw new RuntimeException("Username already exists"); // Throw an exception if username is taken
         }
@@ -77,9 +77,9 @@ public class UserService {
         String hashedPassword = passwordEncoder.encode(user.getPassword());
         logger.info("Hashed password for user {}: {}", user.getUsername(), hashedPassword); // Log hashed password
         user.setPassword(hashedPassword); // Encrypt password
-        User savedUser = userRepository.save(user); // Save user to the repository
-        logger.info("User created successfully: {}", savedUser); // Log successful creation
-        return savedUser; // Return the saved user
+        userCache.put(user.getId(), user); // Store user in cache
+        logger.info("User created successfully: {}", user); // Log successful creation
+        return user; // Return the saved user
     }
     
     /**
@@ -91,7 +91,7 @@ public class UserService {
      */
     public User updateUser(Long id, User userDetails) {
         User user = userRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("User not found")); // Fetch user or throw exception
+            .orElseThrow(() -> new RuntimeException("User not found"));
         user.setUsername(userDetails.getUsername()); // Update username
         user.setEmail(userDetails.getEmail()); // Update email
         // Encrypt password only if it's being updated
@@ -117,7 +117,10 @@ public class UserService {
      * @return Optional<User> containing the user if found
      */
     public Optional<User> getUserByUsername(String username) {
-        return userRepository.findByUsername(username); // Fetch user by username
+        // Check the cache for the user
+        return userCache.values().stream()
+            .filter(user -> user.getUsername().equals(username))
+            .findFirst(); // Fetch user by username from cache
     }
 
     /**
@@ -215,8 +218,24 @@ public class UserService {
     }
 
     public Optional<User> getUserByToken(String token) {
-        // Logic to find the user by token (this could involve checking a database or cache)
-        // For example, assuming you have a method in UserRepository to find by token
-        return userRepository.findByToken(token); // Fetch user by token
+        return userRepository.findByToken(token) // Fetch user by token from the database
+            .or(() -> {
+                // Check the cache for the token
+                return verificationTokenCache.entrySet().stream()
+                    .filter(entry -> entry.getValue().equals(token))
+                    .map(entry -> userRepository.findById(entry.getKey()).orElse(null))
+                    .findFirst();
+            });
+    }
+
+    public void saveResetToken(Long userId, String token) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setToken(token); // Set the reset token
+        userRepository.save(user); // Save the user with the token
+    }
+
+    public void saveVerificationToken(Long userId, String token) {
+        verificationTokenCache.put(userId, token); // Store token in cache
     }
 }
