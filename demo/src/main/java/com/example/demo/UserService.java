@@ -69,13 +69,17 @@ public class UserService {
     public User createUser(User user) {
         // Check if the username already exists
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            logger.warn("Attempt to create user failed: Username {} already exists", user.getUsername()); // Log warning
             throw new RuntimeException("Username already exists"); // Throw an exception if username is taken
         }
+        logger.info("Creating user with username: {}", user.getUsername()); // Log user creation attempt
         user.setRoles(Set.of("ROLE_USER")); // Assign default role
         String hashedPassword = passwordEncoder.encode(user.getPassword());
         logger.info("Hashed password for user {}: {}", user.getUsername(), hashedPassword); // Log hashed password
         user.setPassword(hashedPassword); // Encrypt password
-        return userRepository.save(user); // Save user to the repository
+        User savedUser = userRepository.save(user); // Save user to the repository
+        logger.info("User created successfully: {}", savedUser); // Log successful creation
+        return savedUser; // Return the saved user
     }
     
     /**
