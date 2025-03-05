@@ -24,10 +24,9 @@ public class AuthController {
     // Login endpoint (improved)
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
-        return userService.getUserByUsername(loginRequest.getUsername())
-            .filter(user -> user.getPassword().equals(loginRequest.getPassword()))
-            .map(user -> ResponseEntity.ok("Login successful"))
-            .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                  .body("Invalid credentials"));
+        if (userService.verifyUserCredentials(loginRequest.getUsername(), loginRequest.getPassword())) {
+            return ResponseEntity.ok("Login successful");
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
     }
 }

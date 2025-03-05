@@ -25,7 +25,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "aeew5g2nixa80b"
+          "uid": "${DS_PROMETHEUS}"
         },
         "fieldConfig": {
           "defaults": {
@@ -107,7 +107,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "aeew5g2nixa80b"
+              "uid": "${DS_PROMETHEUS}"
             },
             "editorMode": "builder",
             "expr": "rate(http_server_requests_seconds_count[5m])",
@@ -118,7 +118,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "aeew5g2nixa80b"
+              "uid": "${DS_PROMETHEUS}"
             },
             "editorMode": "code",
             "expr": "rate(http_server_requests_seconds_sum[5m]) / rate(http_server_requests_seconds_count[5m])",
@@ -131,7 +131,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "aeew5g2nixa80b"
+              "uid": "${DS_PROMETHEUS}"
             },
             "editorMode": "code",
             "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))",
@@ -148,7 +148,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "aeew5g2nixa80b"
+          "uid": "${DS_PROMETHEUS}"
         },
         "fieldConfig": {
           "defaults": {
@@ -212,7 +212,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "aeew5g2nixa80b"
+          "uid": "${DS_PROMETHEUS}"
         },
         "fieldConfig": {
           "defaults": {
@@ -271,7 +271,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "aeew5g2nixa80b"
+              "uid": "${DS_PROMETHEUS}"
             },
             "editorMode": "code",
             "expr": "jvm_threads_live_threads",
@@ -288,7 +288,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "aeew5g2nixa80b"
+          "uid": "${DS_PROMETHEUS}"
         },
         "fieldConfig": {
           "defaults": {

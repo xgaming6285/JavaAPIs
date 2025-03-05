@@ -13,6 +13,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -22,6 +23,9 @@ public class UserService {
     
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     
     private final Map<String, User> usersByUsername = new HashMap<>();
     private final AtomicLong idCounter = new AtomicLong();
@@ -39,6 +43,8 @@ public class UserService {
     }
     
     public User createUser(User user) {
+        // Encrypt password before saving
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
     
@@ -47,7 +53,10 @@ public class UserService {
             .orElseThrow(() -> new RuntimeException("User not found"));
         user.setUsername(userDetails.getUsername());
         user.setEmail(userDetails.getEmail());
-        user.setPassword(userDetails.getPassword());
+        // Only encode password if it's being updated
+        if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
+        }
         return userRepository.save(user);
     }
     
@@ -72,10 +81,14 @@ public class UserService {
     public User updatePassword(Long id, String oldPassword, String newPassword) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("User not found"));
-        if (!user.getPassword().equals(oldPassword)) {
-            throw new RuntimeException("Old password does not match");
+            
+        // Verify old password
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Invalid old password");
         }
-        user.setPassword(newPassword);
+        
+        // Update to new encrypted password
+        user.setPassword(passwordEncoder.encode(newPassword));
         return userRepository.save(user);
     }
 
@@ -98,5 +111,12 @@ public class UserService {
     // Fallback method in case of failure
     public User fallbackGetUserById(Long id, Throwable t) {
         return new User("fallback-user", "fallback@example.com", "fallback-password");
+    }
+
+    // Update login verification in AuthController
+    public boolean verifyUserCredentials(String username, String password) {
+        return userRepository.findByUsername(username)
+            .map(user -> passwordEncoder.matches(password, user.getPassword()))
+            .orElse(false);
     }
 }
