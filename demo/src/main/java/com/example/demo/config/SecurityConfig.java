@@ -8,6 +8,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class SecurityConfig {
     
+    /**
+     * Creates and configures a PasswordEncoder bean for password hashing.
+     * 
+     * @return A BCryptPasswordEncoder instance for secure password encoding
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
