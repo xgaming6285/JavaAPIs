@@ -28,5 +28,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     List<User> findByUsernameContainingIgnoreCase(String username);
 
+    /**
+     * Finds a user by their authentication token.
+     * 
+     * @param token The authentication token associated with the user
+     * @return An Optional containing the User if found, or an empty Optional if no user matches the given token
+     */
     Optional<User> findByToken(String token);
 }
