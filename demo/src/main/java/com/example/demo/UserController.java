@@ -41,6 +41,13 @@ public class UserController {
     }
     
     // Endpoint to get all users
+    /**
+     * Retrieves a list of all users in the system.
+     * This method fetches all users from the user service, maps them to UserDTO objects,
+     * and returns them as a list. It is timed for performance monitoring.
+     * 
+     * @return A List of UserDTO objects representing all users in the system
+     */
     @Timed(value = "api.getAllUsers.time", description = "Time taken to return all users")
     @Operation(summary = "Get all users", description = "Retrieves a list of all users in the system")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved users")
@@ -70,6 +77,19 @@ public class UserController {
     }
     
     // Endpoint to create a new user
+    /**
+     * Creates a new user in the system.
+     * 
+     * This method handles the creation of a new user based on the provided CreateUserDTO.
+     * It logs the creation process, creates a User object, persists it using the userService,
+     * and returns a UserDTO representation of the created user. If successful, it returns
+     * a 201 (Created) status code. In case of any errors during the process, it logs the
+     * error and re-throws the exception.
+     * 
+     * @param createUserDTO The DTO containing user details for creation (username, email, password)
+     * @return ResponseEntity<UserDTO> A ResponseEntity containing the created user's DTO and HTTP status 201 if successful
+     * @throws Exception If an error occurs during user creation
+     */
     @Operation(summary = "Create a new user", description = "Creates a new user in the system")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "User created successfully"),
@@ -96,6 +116,14 @@ public class UserController {
     }
     
     // Endpoint to update an existing user's information
+    /**
+     * Updates an existing user's information
+     * 
+     * @param id ID of the user to update
+     * @param userDetails Updated user details
+     * @return ResponseEntity containing the updated UserDTO
+     * @throws ResourceNotFoundException if the user is not found
+     */
     @Operation(summary = "Update user", description = "Updates an existing user's information")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User updated successfully"),
@@ -111,6 +139,12 @@ public class UserController {
     }
     
     // Endpoint to delete a user
+    /**
+     * Deletes a user with the specified ID.
+     * 
+     * @param id The unique identifier of the user to be deleted
+     * @return ResponseEntity with no content, indicating successful deletion
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id); // Delete user in the service
@@ -118,6 +152,12 @@ public class UserController {
     }
     
     // Endpoint to search users by username (partial match)
+    /**
+     * Searches for users based on the provided username and returns a list of UserDTO objects.
+     * 
+     * @param username The username to search for
+     * @return A list of UserDTO objects containing matching users' id, username, and email
+     */
     @GetMapping("/search")
     public List<UserDTO> searchUsers(@RequestParam("username") String username) {
         return userService.searchUsersByUsername(username) // Search users by username
@@ -127,6 +167,15 @@ public class UserController {
     }
     
     // Endpoint to get users with pagination and sorting
+    /**
+     * Retrieves a paginated list of user DTOs.
+     * 
+     * This method fetches a page of users from the userService and maps them to UserDTO objects.
+     * The pagination is handled by the Pageable parameter, allowing for flexible page size and sorting.
+     * 
+     * @param pageable The pagination information, including page number, size, and sorting details
+     * @return A Page object containing UserDTO objects representing the requested page of users
+     */
     @GetMapping("/paginated")
     public Page<UserDTO> getUsersPaginated(Pageable pageable) {
         Page<User> usersPage = userService.getUsersPaginated(pageable); // Fetch paginated users
@@ -134,6 +183,15 @@ public class UserController {
     }
     
     // Endpoint to update password
+    /**
+     * Updates the password for a user with the given ID.
+     * 
+     * @param id The ID of the user whose password is to be updated
+     * @param passwordUpdateDTO DTO containing the old and new passwords
+     * @return ResponseEntity<UserDTO> containing the updated user information
+     * @throws IllegalArgumentException if the old password is incorrect or the new password is invalid
+     * @throws EntityNotFoundException if no user is found with the given ID
+     */
     @PutMapping("/{id}/password")
     public ResponseEntity<UserDTO> updatePassword(@PathVariable Long id,
                                                   @RequestBody PasswordUpdateDTO passwordUpdateDTO) {
@@ -145,6 +203,12 @@ public class UserController {
     }
     
     // Endpoint to get user with circuit breaker
+    /**
+     * Retrieves a user by ID using a circuit breaker pattern and returns it as a UserDTO.
+     * 
+     * @param id The unique identifier of the user to retrieve
+     * @return ResponseEntity containing the UserDTO if found, or an appropriate error response
+     */
     @GetMapping("/circuit-test/{id}")
     public ResponseEntity<UserDTO> getUserWithCircuitBreaker(@PathVariable Long id) {
         User user = userService.getUserByIdWithCircuitBreaker(id); // Fetch user with circuit breaker
@@ -153,6 +217,13 @@ public class UserController {
     }
     
     // Endpoint to update user profile
+    /**
+     * Updates the user profile for the given user ID.
+     * 
+     * @param id The ID of the user to update
+     * @param userDetails The updated user information
+     * @return ResponseEntity containing the updated UserDTO
+     */
     @PutMapping("/{id}/profile")
     public ResponseEntity<UserDTO> updateProfile(@PathVariable Long id, @RequestBody User userDetails) {
         User updatedUser = userService.updateUser(id, userDetails); // Update user in the service
