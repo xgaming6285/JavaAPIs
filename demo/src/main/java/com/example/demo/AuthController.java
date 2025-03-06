@@ -30,10 +30,26 @@ public class AuthController {
     // Registration endpoint
     @PostMapping("/register")
     public ResponseEntity<UserDTO> register(@RequestBody CreateUserDTO createUserDTO) {
+        logger.info("Received registration request: {}", createUserDTO); // Log the incoming request
+        // Validate the CreateUserDTO
+        if (createUserDTO.getUsername() == null || createUserDTO.getUsername().isEmpty()) {
+            logger.error("Validation error: Username is mandatory");
+            return ResponseEntity.badRequest().body(null);
+        }
+        if (createUserDTO.getEmail() == null || createUserDTO.getEmail().isEmpty()) {
+            logger.error("Validation error: Email is mandatory");
+            return ResponseEntity.badRequest().body(null);
+        }
+        if (createUserDTO.getPassword() == null || createUserDTO.getPassword().isEmpty()) {
+            logger.error("Validation error: Password is mandatory");
+            return ResponseEntity.badRequest().body(null);
+        }
         User user = new User(createUserDTO.getUsername(), createUserDTO.getEmail(), passwordEncoder.encode(createUserDTO.getPassword()));
+        logger.info("User object created: {}", user); // Log the created user object
         User newUser = userService.createUser(user);
-        logger.info("User created: {}", newUser);
+        logger.info("User created in service: {}", newUser); // Log the user created in the service
         String token = UUID.randomUUID().toString(); // Generate token
+        logger.info("Generated token: {}", token); // Log the generated token
         userService.saveVerificationToken(newUser.getId(), token); // Save token in cache
         emailService.sendVerificationEmail(newUser.getEmail(), token); // Send verification email
         // Save token in the database or cache for later verification

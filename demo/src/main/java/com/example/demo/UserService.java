@@ -67,19 +67,20 @@ public class UserService {
      * @return the created User object
      */
     public User createUser(User user) {
-        // Check if the username already exists in the cache
-        if (verificationTokenCache.containsKey(user.getId())) {
-            logger.warn("Attempt to create user failed: Username {} already exists", user.getUsername()); // Log warning
-            throw new RuntimeException("Username already exists"); // Throw an exception if username is taken
-        }
+        logger.info("User object before saving: {}", user); // Log the user object
         logger.info("Creating user with username: {}", user.getUsername()); // Log user creation attempt
         user.setRoles(Set.of("ROLE_USER")); // Assign default role
         String hashedPassword = passwordEncoder.encode(user.getPassword());
         logger.info("Hashed password for user {}: {}", user.getUsername(), hashedPassword); // Log hashed password
         user.setPassword(hashedPassword); // Encrypt password
-        userCache.put(user.getId(), user); // Store user in cache
-        logger.info("User created successfully: {}", user); // Log successful creation
-        return user; // Return the saved user
+        try {
+            User savedUser = userRepository.save(user); // Save user in the repository
+            logger.info("User saved successfully: {}", savedUser); // Log the saved user
+            return savedUser; // Return the saved user
+        } catch (Exception e) {
+            logger.error("Error saving user: {}", e.getMessage(), e); // Log the exception
+            throw new RuntimeException("Error saving user"); // Rethrow the exception
+        }
     }
     
     /**
