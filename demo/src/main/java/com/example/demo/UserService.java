@@ -217,6 +217,16 @@ public class UserService {
             .orElse(false); // Return false if user not found
     }
 
+    /**
+     * Retrieves a User object associated with the given token.
+     * 
+     * This method first attempts to find the user by querying the database using the provided token.
+     * If not found, it then checks a cache of verification tokens, matching the token to a user ID
+     * and retrieving the corresponding user from the database.
+     * 
+     * @param token The authentication token used to identify the user
+     * @return An Optional containing the User if found, or an empty Optional if no user is associated with the token
+     */
     public Optional<User> getUserByToken(String token) {
         return userRepository.findByToken(token) // Fetch user by token from the database
             .or(() -> {
@@ -228,6 +238,16 @@ public class UserService {
             });
     }
 
+    /**
+     * Saves a reset token for a given user.
+     * 
+     * This method retrieves a user by their ID, sets the provided reset token
+     * for the user, and then saves the updated user information.
+     * 
+     * @param userId The ID of the user for whom to save the reset token
+     * @param token The reset token to be saved for the user
+     * @throws RuntimeException if the user with the given ID is not found
+     */
     public void saveResetToken(Long userId, String token) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found"));
@@ -235,6 +255,12 @@ public class UserService {
         userRepository.save(user); // Save the user with the token
     }
 
+    /**
+     * Saves a verification token for a specific user in the cache.
+     * 
+     * @param userId The unique identifier of the user
+     * @param token The verification token to be saved
+     */
     public void saveVerificationToken(Long userId, String token) {
         verificationTokenCache.put(userId, token); // Store token in cache
     }
