@@ -97,19 +97,28 @@ public class AuthController {
     // New endpoint for updating the password
     @PostMapping("/update-password")
     public ResponseEntity<String> updatePassword(@RequestParam String token, @RequestBody PasswordUpdateDTO passwordUpdateDTO) {
-        // Logic to verify the token and update the password
+        logger.debug("Received password update request for token: {}", token);
         Optional<User> userOpt = userService.getUserByToken(token); // Fetch user by token
         if (userOpt.isPresent()) {
             User user = userOpt.get();
+            logger.debug("User found: {}", user.getUsername());
+            
             // Verify old password
+            logger.debug("Checking old password for user: {}", user.getUsername());
+            logger.debug("Stored password hash for user {}: {}", user.getUsername(), user.getPassword()); // Log stored password hash
+            logger.debug("Old password being checked: {}", passwordUpdateDTO.getOldPassword()); // Log old password being checked
             if (!passwordEncoder.matches(passwordUpdateDTO.getOldPassword(), user.getPassword())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Old password is incorrect"); // Return error response
+                logger.error("Old password is incorrect for user: {}", user.getUsername());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Old password is incorrect");
             }
+            
             user.setPassword(passwordEncoder.encode(passwordUpdateDTO.getNewPassword())); // Encrypt new password
             userService.updateUser(user.getId(), user); // Save updated user
+            logger.info("Password updated successfully for user: {}", user.getUsername());
             return ResponseEntity.ok("Password updated successfully");
         } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token"); // Return error response
+            logger.error("Invalid token provided for password update");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token");
         }
     }
 }
