@@ -70,9 +70,16 @@ public class UserService {
         logger.info("User object before saving: {}", user); // Log the user object
         logger.info("Creating user with username: {}", user.getUsername()); // Log user creation attempt
         user.setRoles(Set.of("ROLE_USER")); // Assign default role
-        String hashedPassword = passwordEncoder.encode(user.getPassword());
-        logger.info("Hashed password for user {}: {}", user.getUsername(), hashedPassword); // Log hashed password
-        user.setPassword(hashedPassword); // Encrypt password
+        
+        // Check if the password is already hashed
+        if (!user.getPassword().startsWith("$2a$")) { // Assuming BCrypt hashes start with "$2a$"
+            String hashedPassword = passwordEncoder.encode(user.getPassword());
+            logger.info("Hashed password for user {}: {}", user.getUsername(), hashedPassword); // Log hashed password
+            user.setPassword(hashedPassword); // Encrypt password
+        } else {
+            logger.info("Password for user {} is already hashed.", user.getUsername());
+        }
+        
         try {
             User savedUser = userRepository.save(user); // Save user in the repository
             logger.info("User saved successfully: {}", savedUser); // Log the saved user
@@ -95,8 +102,8 @@ public class UserService {
             .orElseThrow(() -> new RuntimeException("User not found"));
         user.setUsername(userDetails.getUsername()); // Update username
         user.setEmail(userDetails.getEmail()); // Update email
-        // Encrypt password only if it's being updated
-        if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
+        // Encrypt password only if it's being updated and not already hashed
+        if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty() && !userDetails.getPassword().startsWith("$2a$")) {
             user.setPassword(passwordEncoder.encode(userDetails.getPassword())); // Encrypt new password
         }
         return userRepository.save(user); // Save updated user
@@ -156,12 +163,17 @@ public class UserService {
         logger.debug("Updating password for user ID: {}", id);
         User user = userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("User not found"));
-
+        
         // Verify old password
         logger.debug("Stored password hash for user {}: {}", user.getUsername(), user.getPassword());
         logger.debug("Old password being checked: {}", oldPassword);
         
-
+        // Check if the old password matches the stored password
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            logger.error("Old password is incorrect for user: {}", user.getUsername());
+            throw new RuntimeException("Old password is incorrect");
+        }
+        
         // Hash the new password
         user.setPassword(passwordEncoder.encode(newPassword));
         logger.info("New password hashed for user: {}", user.getUsername());
