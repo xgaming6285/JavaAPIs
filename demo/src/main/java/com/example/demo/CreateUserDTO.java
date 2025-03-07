@@ -2,6 +2,7 @@ package com.example.demo;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * Data Transfer Object for creating a new user.
@@ -16,6 +17,7 @@ public class CreateUserDTO {
     private String email;
     
     @NotBlank(message = "Password is mandatory")
+    @Pattern(regexp = "^(?!\\$2a\\$).*", message = "Password cannot start with '$2a$'")
     private String password;
 
     // Default constructor

@@ -1,6 +1,7 @@
 package com.example.demo;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * Data Transfer Object for updating a user's password.
@@ -12,6 +13,7 @@ public class PasswordUpdateDTO {
     private String oldPassword;
     
     @NotBlank(message = "New password is mandatory")
+    @Pattern(regexp = "^(?!\\$2a\\$).*", message = "New password cannot start with '$2a$'")
     private String newPassword;
     
     // Getters and setters
