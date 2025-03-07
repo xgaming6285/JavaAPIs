@@ -267,4 +267,14 @@ public class UserService {
     public void saveVerificationToken(Long userId, String token) {
         verificationTokenCache.put(userId, token); // Store token in cache
     }
+
+    /**
+     * Finds a user by their email.
+     * 
+     * @param email the email of the user to find
+     * @return Optional<User> containing the user if found
+     */
+    public Optional<User> getUserByEmail(String email) {
+        return userRepository.findByEmail(email); // Fetch user by email from the repository
+    }
 }

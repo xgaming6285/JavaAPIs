@@ -24,6 +24,18 @@ public class GlobalExceptionHandler {
                              .body(new ErrorResponse(ex.getMessage()));
     }
     
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                             .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                             .body(new ErrorResponse("An unexpected error occurred"));
+    }
+    
     /**
      * Custom error response DTO for returning error messages.
      */

@@ -35,4 +35,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return An Optional containing the User if found, or an empty Optional if no user matches the given token
      */
     Optional<User> findByToken(String token);
+
+    /**
+     * Finds a user by their email.
+     * 
+     * @param email the email of the user to find
+     * @return an Optional containing the found user, or empty if no user was found
+     */
+    Optional<User> findByEmail(String email);
 }

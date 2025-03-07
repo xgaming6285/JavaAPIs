@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 
 // Controller for managing user-related operations
 @RestController
@@ -54,10 +55,12 @@ public class UserController {
     @GetMapping("")
     public List<UserDTO> getAllUsers() {
         logger.debug("Fetching all users"); // Log the action
-        return userService.getAllUsers() // Fetch all users from the service
+        List<UserDTO> users = userService.getAllUsers() // Fetch all users from the service
                           .stream()
                           .map(user -> new UserDTO(user.getId(), user.getUsername(), user.getEmail())) // Map to UserDTO
                           .collect(Collectors.toList()); // Collect results into a list
+        logger.debug("Retrieved {} users", users.size()); // Log the number of users retrieved
+        return users;
     }
     
     // Endpoint to get a user by ID
@@ -70,10 +73,16 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(
             @Parameter(description = "ID of the user to retrieve") @PathVariable Long id) {
+        logger.debug("Fetching user with ID: {}", id); // Log the user ID being fetched
         Optional<User> userOpt = userService.getUserById(id); // Fetch user by ID
-        return userOpt.map(user -> ResponseEntity.ok( // Return user if found
-                                    new UserDTO(user.getId(), user.getUsername(), user.getEmail())))
-                      .orElse(ResponseEntity.notFound().build()); // Return 404 if not found
+        if (userOpt.isPresent()) {
+            UserDTO userDTO = new UserDTO(userOpt.get().getId(), userOpt.get().getUsername(), userOpt.get().getEmail());
+            logger.debug("User found: {}", userDTO); // Log the found user
+            return ResponseEntity.ok(userDTO); // Return user if found
+        } else {
+            logger.warn("User with ID: {} not found", id); // Log warning if user not found
+            return ResponseEntity.notFound().build(); // Return 404 if not found
+        }
     }
     
     // Endpoint to create a new user
@@ -108,7 +117,7 @@ public class UserController {
             userCreationCounter.increment(); // Increment user creation counter
             logger.info("Successfully created user with ID: {}", created.getId()); // Log success
             
-            return ResponseEntity.status(201).body(userDTO); // Return created user
+            return ResponseEntity.status(HttpStatus.CREATED).body(userDTO); // Return created user
         } catch (Exception e) {
             logger.error("Error creating user: {}", e.getMessage(), e); // Log error
             throw e; // Rethrow exception
@@ -133,8 +142,10 @@ public class UserController {
     public ResponseEntity<UserDTO> updateUser(
             @Parameter(description = "ID of the user to update") @PathVariable Long id,
             @Parameter(description = "Updated user details") @RequestBody User userDetails) {
+        logger.debug("Updating user with ID: {}", id); // Log the user ID being updated
         User updatedUser = userService.updateUser(id, userDetails); // Update user in the service
         UserDTO userDTO = new UserDTO(updatedUser.getId(), updatedUser.getUsername(), updatedUser.getEmail()); // Map to UserDTO
+        logger.info("Successfully updated user with ID: {}", updatedUser.getId()); // Log success
         return ResponseEntity.ok(userDTO); // Return updated user
     }
     
@@ -147,7 +158,9 @@ public class UserController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        logger.debug("Deleting user with ID: {}", id); // Log the user ID being deleted
         userService.deleteUser(id); // Delete user in the service
+        logger.info("Successfully deleted user with ID: {}", id); // Log success
         return ResponseEntity.noContent().build(); // Return no content response
     }
     
@@ -160,10 +173,13 @@ public class UserController {
      */
     @GetMapping("/search")
     public List<UserDTO> searchUsers(@RequestParam("username") String username) {
-        return userService.searchUsersByUsername(username) // Search users by username
+        logger.debug("Searching users with username: {}", username); // Log the search query
+        List<UserDTO> users = userService.searchUsersByUsername(username) // Search users by username
                           .stream()
                           .map(user -> new UserDTO(user.getId(), user.getUsername(), user.getEmail())) // Map to UserDTO
                           .collect(Collectors.toList()); // Collect results into a list
+        logger.debug("Found {} users matching username: {}", users.size(), username); // Log the number of users found
+        return users;
     }
     
     // Endpoint to get users with pagination and sorting
@@ -178,7 +194,9 @@ public class UserController {
      */
     @GetMapping("/paginated")
     public Page<UserDTO> getUsersPaginated(Pageable pageable) {
+        logger.debug("Fetching paginated users with page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize()); // Log pagination details
         Page<User> usersPage = userService.getUsersPaginated(pageable); // Fetch paginated users
+        logger.debug("Retrieved {} users for page: {}", usersPage.getTotalElements(), pageable.getPageNumber()); // Log total users retrieved
         return usersPage.map(user -> new UserDTO(user.getId(), user.getUsername(), user.getEmail())); // Map to UserDTO
     }
     
@@ -195,10 +213,12 @@ public class UserController {
     @PutMapping("/{id}/password")
     public ResponseEntity<UserDTO> updatePassword(@PathVariable Long id,
                                                   @RequestBody PasswordUpdateDTO passwordUpdateDTO) {
+        logger.debug("Updating password for user with ID: {}", id); // Log the user ID for password update
         User updatedUser = userService.updatePassword(id, // Update password in the service
                                 passwordUpdateDTO.getOldPassword(),
                                 passwordUpdateDTO.getNewPassword());
         UserDTO userDTO = new UserDTO(updatedUser.getId(), updatedUser.getUsername(), updatedUser.getEmail()); // Map to UserDTO
+        logger.info("Successfully updated password for user with ID: {}", updatedUser.getId()); // Log success
         return ResponseEntity.ok(userDTO); // Return updated user
     }
     
@@ -211,8 +231,10 @@ public class UserController {
      */
     @GetMapping("/circuit-test/{id}")
     public ResponseEntity<UserDTO> getUserWithCircuitBreaker(@PathVariable Long id) {
+        logger.debug("Fetching user with ID: {} using circuit breaker", id); // Log the user ID being fetched with circuit breaker
         User user = userService.getUserByIdWithCircuitBreaker(id); // Fetch user with circuit breaker
         UserDTO userDTO = new UserDTO(user.getId(), user.getUsername(), user.getEmail()); // Map to UserDTO
+        logger.debug("Successfully retrieved user with ID: {}", user.getId()); // Log success
         return ResponseEntity.ok(userDTO); // Return user
     }
     
@@ -226,8 +248,10 @@ public class UserController {
      */
     @PutMapping("/{id}/profile")
     public ResponseEntity<UserDTO> updateProfile(@PathVariable Long id, @RequestBody User userDetails) {
+        logger.debug("Updating profile for user with ID: {}", id); // Log the user ID for profile update
         User updatedUser = userService.updateUser(id, userDetails); // Update user in the service
         UserDTO userDTO = new UserDTO(updatedUser.getId(), updatedUser.getUsername(), updatedUser.getEmail()); // Map to UserDTO
+        logger.info("Successfully updated profile for user with ID: {}", updatedUser.getId()); // Log success
         return ResponseEntity.ok(userDTO); // Return updated user
     }
 }

@@ -43,6 +43,13 @@ public class EmailService {
         email.setTo(to);
         email.setSubject(subject);
         email.setText(message);
-        mailSender.send(email);
+        
+        try {
+            mailSender.send(email);
+            logger.info("Reset password email sent to {}", to);
+        } catch (MailException e) {
+            logger.error("Failed to send reset password email to {}: {}", to, e.getMessage());
+            throw new RuntimeException("Failed to send reset password email");
+        }
     }
 } 
