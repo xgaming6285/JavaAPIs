@@ -10,28 +10,18 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
-/**
- * OpenAPI configuration class for setting up API documentation.
- * This class defines the OpenAPI specification for the User Management API,
- * including server details, contact information, and grouped API paths.
- */
 @Configuration
 public class OpenAPIConfig {
-    
-    /**
-     * Configures the OpenAPI instance with server information and API details.
-     * 
-     * @return OpenAPI instance with configured information.
-     */
+
     @Bean
     public OpenAPI myOpenAPI() {
-        Server devServer = new Server();
-        devServer.setUrl("http://localhost:8080");
-        devServer.setDescription("Server URL in Development environment");
+        Server devServer = new Server()
+                .url("http://localhost:8080")
+                .description("Server URL in Development environment");
 
-        Contact contact = new Contact();
-        contact.setName("API Support");
-        contact.setEmail("support@example.com");
+        Contact contact = new Contact()
+                .name("API Support")
+                .email("support@example.com");
 
         Info info = new Info()
                 .title("User Management API")
@@ -44,11 +34,6 @@ public class OpenAPIConfig {
                 .servers(List.of(devServer));
     }
 
-    /**
-     * Groups the user management APIs for documentation.
-     * 
-     * @return GroupedOpenApi instance for user management APIs.
-     */
     @Bean
     public GroupedOpenApi userApis() {
         return GroupedOpenApi.builder()
@@ -57,11 +42,6 @@ public class OpenAPIConfig {
                 .build();
     }
 
-    /**
-     * Groups the authentication APIs for documentation.
-     * 
-     * @return GroupedOpenApi instance for authentication APIs.
-     */
     @Bean
     public GroupedOpenApi authApis() {
         return GroupedOpenApi.builder()
@@ -70,11 +50,6 @@ public class OpenAPIConfig {
                 .build();
     }
 
-    /**
-     * Groups the health check APIs for documentation.
-     * 
-     * @return GroupedOpenApi instance for health check APIs.
-     */
     @Bean
     public GroupedOpenApi healthApis() {
         return GroupedOpenApi.builder()
@@ -82,4 +57,4 @@ public class OpenAPIConfig {
                 .pathsToMatch("/api/health/**")
                 .build();
     }
-} 
+}

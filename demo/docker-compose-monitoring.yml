@@ -52,5 +52,5 @@ networks:
     driver: bridge
 
 volumes:
-  prometheus-data:
+  prometheus-data:  
   grafana-storage: 

@@ -49,6 +49,10 @@ Thumbs.db
 # Application properties override
 application-local.properties
 application-local.yml
+application-dev.properties
+application-dev.yml
+application-prod.properties
+application-prod.yml
 
 # Maven specific
 .mvn/timing.properties
@@ -60,3 +64,52 @@ pom.xml.next
 release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
+
+# Docker volumes and temp files
+docker/volumes/
+.docker/
+tmp/
+temp/
+
+# Test coverage reports
+coverage/
+jacoco-report/
+.coveralls.yml
+
+# Node (in case frontend is added later)
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Gradle (in case it's used as alternative build tool)
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+
+# Eclipse specific
+.metadata/
+bin/
+.settings/
+.project
+.classpath
+
+# IntelliJ specific
+*.iml
+*.iws
+*.ipr
+.idea/
+.idea_modules/
+out/
+
+# Visual Studio Code specific
+.vscode/
+.history/
+
+# Temporary files
+*~
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

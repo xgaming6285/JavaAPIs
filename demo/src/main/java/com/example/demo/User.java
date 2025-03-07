@@ -1,121 +1,182 @@
 package com.example.demo;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
-/**
- * User entity representing a user in the system.
- * This class maps to the "users" table in the database and contains user-related information.
- */
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+    @Index(name = "idx_username", columnList = "username"),
+    @Index(name = "idx_email", columnList = "email")
+})
 public class User {
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Unique identifier for the user
+    private final Long id;
 
-    private String username; // Username of the user
-    private String email; // Email address of the user
-    private String password; // User's password (should be hashed in production)
-    private String token; // Token for email verification
+    @NotBlank
+    @Size(min = 3, max = 50)
+    @Column(nullable = false, unique = true, length = 50)
+    private String username;
 
-    private boolean active; // Field to indicate if the user is active
+    @NotBlank
+    @Email
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String password;
+
+    @Column(unique = true)
+    private String token;
+
+    @Column(nullable = false)
+    private boolean active = false;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> roles = new HashSet<>(); // User roles
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role")
+    private Set<String> roles = new HashSet<>();
 
-    // Default constructor
-    public User() {}
+    protected User() {
+        this.id = null;
+    }
 
-    // Parameterized constructor for initializing User with username, email, and password
     public User(String username, String email, String password) {
+        this.id = null;
         this.username = username;
         this.email = email;
         this.password = password;
     }
 
-    // Getter for id
     public Long getId() {
         return id;
     }
 
-    // Setter for id
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    // Getter for username
     public String getUsername() {
         return username;
     }
 
-    // Setter for username
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    // Getter for email
     public String getEmail() {
         return email;
     }
 
-    // Setter for email
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    // Getter for password
     public String getPassword() {
         return password;
     }
 
-    // Setter for password
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    // Getter for token
     public String getToken() {
         return token;
     }
 
-    // Setter for token
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    // Getter for active
     public boolean isActive() {
         return active;
     }
 
-    // Setter for active
+    public Set<String> getRoles() {
+        return new HashSet<>(roles);
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
     public void setActive(boolean active) {
         this.active = active;
     }
 
-    // Getter for roles
-    public Set<String> getRoles() {
-        return roles;
-    }
-
-    // Setter for roles
     public void setRoles(Set<String> roles) {
-        this.roles = roles;
+        this.roles = new HashSet<>(roles);
     }
 
-    // toString method for representing the User object as a string
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User user)) return false;
+        return Objects.equals(id, user.id) &&
+               Objects.equals(username, user.username) &&
+               Objects.equals(email, user.email);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, username, email);
+    }
+
     @Override
     public String toString() {
-        return "User{" +
-        "id=" + id +
-        ", username='" + username + '\'' +
-        ", email='" + email + '\'' +
-        ", password='" + password + '\'' +
-        ", token='" + token + '\'' +
-        ", active=" + active +
-        ", roles=" + roles +
-        '}';
+        return "User{id=" + id + 
+               ", username='" + username + '\'' +
+               ", email='" + email + '\'' +
+               ", active=" + active +
+               ", roles=" + roles + '}';
+    }
+
+    public static UserBuilder builder() {
+        return new UserBuilder();
+    }
+
+    public static class UserBuilder {
+        private String username;
+        private String email;
+        private String password;
+        private String token;
+        private boolean active;
+        private Set<String> roles = new HashSet<>();
+
+        public UserBuilder username(String username) {
+            this.username = username;
+            return this;
+        }
+
+        public UserBuilder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public UserBuilder password(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public UserBuilder token(String token) {
+            this.token = token;
+            return this;
+        }
+
+        public UserBuilder active(boolean active) {
+            this.active = active;
+            return this;
+        }
+
+        public UserBuilder roles(Set<String> roles) {
+            this.roles = roles;
+            return this;
+        }
+
+        public User build() {
+            User user = new User(username, email, password);
+            user.setToken(token);
+            user.setActive(active);
+            user.setRoles(roles);
+            return user;
+        }
     }
 }
