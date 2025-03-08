@@ -108,7 +108,7 @@ docker-compose -f docker-compose-monitoring.yml up --build
 </details>
 
 ## 📚 API Documentation
-
+<details>
 ### Available Endpoints
 
 #### User Management
@@ -170,7 +170,7 @@ resilience4j.ratelimiter.instances.login.limitRefreshPeriod=1m
 resilience4j.ratelimiter.instances.passwordReset.limitForPeriod=3
 resilience4j.ratelimiter.instances.passwordReset.limitRefreshPeriod=1m
 ```
-
+</details>
 ### Documentation Links
 - 📘 Swagger UI: `http://localhost:8080/swagger-ui.html`
 - 📗 OpenAPI Spec: `http://localhost:8080/api-docs`
