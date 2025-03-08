@@ -57,7 +57,7 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
    ```
 
 2. **Configure Email Settings**
-   Create `application-local.properties` with your email configuration:
+   Create `application-local.properties` inside "demo\src\main\resources\" with your email configuration:
    ```properties
    spring.mail.host=smtp.gmail.com
    spring.mail.port=587
@@ -72,12 +72,13 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
 #### Local Development
 1. **Build the application**
    ```bash
-   ./mvnw clean install
+   ./mvn clean install
    ```
 
 2. **Run the application**
    ```bash
-   ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+   cd demo
+   mvn spring-boot:run
    ```
 
    The application will start at `http://localhost:8080`
