@@ -22,9 +22,15 @@ build/
 # Logs
 logs/
 *.log
+logs/**/*
 
 # Runtime data
 grafana/data/
+grafana/data/**/*
+grafana/storage/**/*
+grafana/provisioning/**/*
+grafana/dashboards/**/*
+grafana/plugins/**/*
 
 # Compiled class files
 *.class
