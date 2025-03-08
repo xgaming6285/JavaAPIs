@@ -25,12 +25,7 @@ logs/
 logs/**/*
 
 # Runtime data
-grafana/data/
-grafana/data/**/*
-grafana/storage/**/*
-grafana/provisioning/**/*
-grafana/dashboards/**/*
-grafana/plugins/**/*
+demo/grafana
 
 # Compiled class files
 *.class
