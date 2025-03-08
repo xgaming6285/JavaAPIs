@@ -57,4 +57,12 @@ public class OpenAPIConfig {
                 .pathsToMatch("/api/health/**")
                 .build();
     }
+
+    @Bean
+    public GroupedOpenApi analyticsApis() {
+        return GroupedOpenApi.builder()
+                .group("Analytics")
+                .pathsToMatch("/api/v1/analytics/**")
+                .build();
+    }
 }

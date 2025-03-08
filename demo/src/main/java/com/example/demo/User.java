@@ -106,10 +106,7 @@ public class User {
     }
 
     public void setRoles(Set<String> roles) {
-        this.roles.clear();
-        if (roles != null) {
-            this.roles.addAll(roles);
-        }
+        this.roles = new HashSet<>(roles);
     }
 
     public void addRole(String role) {
@@ -128,15 +125,14 @@ public class User {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof User user)) return false;
-        return Objects.equals(id, user.id) &&
-               Objects.equals(username, user.username) &&
-               Objects.equals(email, user.email);
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, email);
+        return Objects.hash(id);
     }
 
     @Override

@@ -18,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.HashSet;
+import java.util.stream.Collectors;
+import java.util.HashMap;
 
 @Service
 public class UserService {
@@ -136,19 +138,21 @@ public class UserService {
     }
 
     public Optional<User> getUserByToken(String token) {
-        return userRepository.findByToken(token)
-            .or(() -> findUserByTokenInCache(token));
+        return userRepository.findByToken(token);
     }
 
     public void saveResetToken(Long userId, String token) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
-        user.setToken(token);
-        userRepository.save(user);
+        userRepository.findById(userId).ifPresent(user -> {
+            user.setToken(token);
+            userRepository.save(user);
+        });
     }
 
     public void saveVerificationToken(Long userId, String token) {
-        verificationTokenCache.put(userId, token);
+        userRepository.findById(userId).ifPresent(user -> {
+            user.setToken(token);
+            userRepository.save(user);
+        });
     }
 
     public Optional<User> getUserByEmail(String email) {
@@ -156,25 +160,24 @@ public class UserService {
     }
 
     private boolean isPasswordHashed(String password) {
-        return password != null && password.startsWith("$2a$");
+        // Simple check - in reality, would need more sophisticated detection
+        return password.length() >= 60;
     }
 
     private void updateUserFields(User user, User userDetails) {
-        user.setUsername(userDetails.getUsername());
-        user.setEmail(userDetails.getEmail());
-        
-        if (userDetails.getPassword() != null && 
-            !userDetails.getPassword().isEmpty() && 
-            !isPasswordHashed(userDetails.getPassword())) {
+        if (userDetails.getUsername() != null) {
+            user.setUsername(userDetails.getUsername());
+        }
+        if (userDetails.getEmail() != null) {
+            user.setEmail(userDetails.getEmail());
+        }
+        if (userDetails.getPassword() != null && !isPasswordHashed(userDetails.getPassword())) {
             user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
         }
-    }
-
-    private Optional<User> findUserByTokenInCache(String token) {
-        return verificationTokenCache.entrySet().stream()
-            .filter(entry -> token.equals(entry.getValue()))
-            .map(entry -> userRepository.findById(entry.getKey()).orElse(null))
-            .findFirst();
+        if (userDetails.getRoles() != null && !userDetails.getRoles().isEmpty()) {
+            user.setRoles(userDetails.getRoles());
+        }
+        user.setActive(userDetails.isActive());
     }
 
     public List<User> getActiveUsers() {
@@ -216,5 +219,67 @@ public class UserService {
             logger.error("Error updating user roles: {}", e.getMessage());
             throw new RuntimeException("Failed to update user roles", e);
         }
+    }
+
+    public long getTotalUsers() {
+        return userRepository.count();
+    }
+
+    public Map<String, Long> getUserCountByRole() {
+        return getAllUsers().stream()
+            .flatMap(user -> user.getRoles().stream())
+            .collect(Collectors.groupingBy(
+                role -> role,
+                Collectors.counting()
+            ));
+    }
+
+    public double getAverageRolesPerUser() {
+        List<User> users = getAllUsers();
+        if (users.isEmpty()) {
+            return 0.0;
+        }
+        return users.stream()
+            .mapToInt(user -> user.getRoles().size())
+            .average()
+            .orElse(0.0);
+    }
+
+    public Map<String, Long> getRoleDistribution() {
+        List<User> users = getAllUsers();
+        long totalUsers = users.size();
+        return users.stream()
+            .flatMap(user -> user.getRoles().stream())
+            .collect(Collectors.groupingBy(
+                role -> role,
+                Collectors.collectingAndThen(
+                    Collectors.counting(),
+                    count -> (count * 100) / totalUsers
+                )
+            ));
+    }
+
+    public List<Map<String, Object>> getCommonRoleCombinations() {
+        return getAllUsers().stream()
+            .map(User::getRoles)
+            .collect(Collectors.groupingBy(
+                roles -> new HashSet<>(roles),
+                Collectors.counting()
+            ))
+            .entrySet().stream()
+            .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
+            .limit(5)
+            .map(entry -> {
+                Map<String, Object> combination = new HashMap<>();
+                combination.put("roles", entry.getKey());
+                combination.put("count", entry.getValue());
+                return combination;
+            })
+            .collect(Collectors.toList());
+    }
+
+    public User fallbackGetUserById(Long id, Exception ex) {
+        logger.warn("Circuit breaker fallback for user {}: {}", id, ex.getMessage());
+        return userCache.get(id);
     }
 }
