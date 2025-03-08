@@ -109,6 +109,7 @@ docker-compose -f docker-compose-monitoring.yml up --build
 
 ## 📚 API Documentation
 <details>
+
 ### Available Endpoints
 
 #### User Management
