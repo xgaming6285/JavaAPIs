@@ -110,24 +110,66 @@ docker-compose -f docker-compose-monitoring.yml up --build
 ## 📚 API Documentation
 
 ### Available Endpoints
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/users` | POST | Create User |
-| `/api/v1/users/{id}` | GET | Get User by ID |
-| `/api/v1/users/{id}` | PUT | Update User |
-| `/api/v1/users/{id}` | DELETE | Delete User |
-| `/api/v1/users/active` | GET | Get Active Users |
-| `/api/v1/users/inactive` | GET | Get Inactive Users |
-| `/api/v1/users/by-role` | GET | Get Users by Role |
-| `/api/v1/users/by-domain` | GET | Get Users by Email Domain |
-| `/api/v1/users/by-min-roles` | GET | Get Users by Minimum Roles |
-| `/api/v1/users/{id}/roles` | PUT | Update User Roles |
-| `/api/v1/users/search/advanced` | GET | Advanced User Search |
-| `/api/auth/register` | POST | User Registration |
-| `/api/auth/login` | POST | User Login |
-| `/api/auth/reset-password` | POST | Password Reset |
-| `/api/auth/verify` | GET | Email Verification |
-| `/api/health` | GET | Health Check |
+
+#### User Management
+| Endpoint | Method | Description | Rate Limited |
+|----------|--------|-------------|--------------|
+| `/api/v1/users` | GET | Get all users | No |
+| `/api/v1/users` | POST | Create user | Yes |
+| `/api/v1/users/{id}` | GET | Get user by ID | No |
+| `/api/v1/users/{id}` | PUT | Update user | No |
+| `/api/v1/users/{id}` | DELETE | Delete user | No |
+| `/api/v1/users/search` | GET | Search users by username | No |
+| `/api/v1/users/paginated` | GET | Get paginated users | No |
+| `/api/v1/users/{id}/password` | PUT | Update user password | Yes |
+| `/api/v1/users/circuit-test/{id}` | GET | Test circuit breaker | No |
+| `/api/v1/users/active` | GET | Get active users | No |
+| `/api/v1/users/inactive` | GET | Get inactive users | No |
+| `/api/v1/users/by-domain` | GET | Get users by email domain | No |
+| `/api/v1/users/by-role` | GET | Get users by role | No |
+| `/api/v1/users/by-min-roles` | GET | Get users by minimum roles | No |
+| `/api/v1/users/search/advanced` | GET | Advanced user search | No |
+| `/api/v1/users/{id}/roles` | PUT | Update user roles | No |
+
+#### Authentication
+| Endpoint | Method | Description | Rate Limited |
+|----------|--------|-------------|--------------|
+| `/api/auth/register` | POST | User registration | Yes |
+| `/api/auth/login` | POST | User login | Yes |
+| `/api/auth/verify` | GET | Email verification | No |
+| `/api/auth/reset-password` | POST | Request password reset | Yes |
+| `/api/auth/update-password` | POST | Update password with token | No |
+
+#### Analytics
+| Endpoint | Method | Description | Rate Limited |
+|----------|--------|-------------|--------------|
+| `/api/v1/analytics/user-stats` | GET | Get user statistics | No |
+| `/api/v1/analytics/activity-trends` | GET | Get user activity trends | No |
+| `/api/v1/analytics/role-distribution` | GET | Get role distribution analysis | No |
+| `/api/v1/analytics/user-growth` | GET | Get user growth metrics | No |
+| `/api/v1/analytics/security-metrics` | GET | Get security metrics | No |
+| `/api/v1/analytics/user-retention` | GET | Get user retention metrics | No |
+| `/api/v1/analytics/user-behavior` | GET | Get user behavior analysis | No |
+
+#### Health Check
+| Endpoint | Method | Description | Rate Limited |
+|----------|--------|-------------|--------------|
+| `/api/health` | GET | API health check | No |
+
+### Rate Limiting Configuration
+```properties
+# Registration: 3 requests per minute
+resilience4j.ratelimiter.instances.registration.limitForPeriod=3
+resilience4j.ratelimiter.instances.registration.limitRefreshPeriod=1m
+
+# Login: 5 requests per minute
+resilience4j.ratelimiter.instances.login.limitForPeriod=5
+resilience4j.ratelimiter.instances.login.limitRefreshPeriod=1m
+
+# Password Reset: 3 requests per minute
+resilience4j.ratelimiter.instances.passwordReset.limitForPeriod=3
+resilience4j.ratelimiter.instances.passwordReset.limitRefreshPeriod=1m
+```
 
 ### Documentation Links
 - 📘 Swagger UI: `http://localhost:8080/swagger-ui.html`
@@ -135,16 +177,24 @@ docker-compose -f docker-compose-monitoring.yml up --build
 
 ## 🔍 Monitoring Stack
 
-<details>
-<summary>Available Monitoring Endpoints</summary>
-
-| Service | URL | Credentials |
+### Available Monitoring Endpoints
+| Service | URL | Description |
 |---------|-----|-------------|
-| Spring Actuator | `http://localhost:8080/actuator` | - |
-| Prometheus | `http://localhost:8080/actuator/prometheus` | - |
-| Grafana | `http://localhost:3000` | admin/admin |
+| Spring Actuator | `http://localhost:8080/actuator` | Health and metrics information |
+| Prometheus | `http://localhost:8080/actuator/prometheus` | Prometheus metrics |
+| Grafana | `http://localhost:3000` | Metrics visualization (credentials: admin/admin) |
 
-</details>
+### Metrics Available
+- User creation count
+- API response times
+- Active/Inactive user counts
+- Login attempts
+- Rate limiter statistics
+- Circuit breaker status
+- User activity trends
+- Security metrics
+- User retention metrics
+- Role distribution
 
 ## 🛠️ Technology Stack
 
