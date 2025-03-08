@@ -25,6 +25,10 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
   - Multi-role support
   - Role-based filtering
 - 📄 Pagination and sorting support
+- 📥 Bulk user import via CSV
+  - Support for username, email, password, active status, and roles
+  - Detailed import results
+  - Error handling for each record
 
 ### Security & Performance
 - 🔒 BCrypt password encryption
@@ -117,6 +121,7 @@ docker-compose -f docker-compose-monitoring.yml up --build
 #### User Management
 | Endpoint | Method | Description | Rate Limited |
 |----------|--------|-------------|--------------|
+| `/api/v1/import/users` | POST | Import users from CSV | No |
 | `/api/v1/users` | GET | Get all users | No |
 | `/api/v1/users` | POST | Create user | Yes |
 | `/api/v1/users/{id}` | GET | Get user by ID | No |
@@ -177,6 +182,22 @@ resilience4j.ratelimiter.instances.passwordReset.limitRefreshPeriod=1m
 ### Documentation Links
 - 📘 Swagger UI: `http://localhost:8080/swagger-ui.html`
 - 📗 OpenAPI Spec: `http://localhost:8080/api-docs`
+
+### CSV Import Format
+The user import feature accepts CSV files with the following format:
+```csv
+username,email,password,active,roles
+john_doe,john.doe@example.com,password123,true,USER,ADMIN
+jane_smith,jane.smith@example.com,password456,true,USER
+```
+
+- **Headers**: Required, case-insensitive
+- **Fields**:
+  - username: Required, unique identifier
+  - email: Required, valid email format
+  - password: Required, will be encrypted
+  - active: Boolean (true/false)
+  - roles: Comma-separated list of roles
 
 </details>
 

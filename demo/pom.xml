@@ -61,6 +61,13 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- CSV Processing -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>1.10.0</version>
+		</dependency>
+
 		<!-- Security -->
 		<dependency>
 			<groupId>org.springframework.security</groupId>
