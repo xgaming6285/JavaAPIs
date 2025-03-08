@@ -1,4 +1,0 @@
-john_doe,john.doe@example.com,password123,true,USER,ADMIN
-jane_smith,jane.smith@example.com,password456,true,USER
-bob_wilson,bob.wilson@example.com,password789,false,USER
-alice_brown,alice.brown@example.com,passwordabc,true,USER,MANAGER 

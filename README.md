@@ -61,7 +61,7 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
 | Requirement | Version |
 |------------|---------|
 | JDK | 17 or later |
-| Maven | 3.6+ |
+| Maven | 3.6+ (optional if using mvnw) |
 | Docker & Docker Compose | Latest |
 | SMTP Server | - |
 
@@ -87,28 +87,69 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
 </details>
 
 <details>
-<summary>2. Run the Application</summary>
+<summary>2. Build and Run</summary>
 
-#### Local Development
+#### Using Maven Wrapper (Recommended)
 
+##### Windows
+```batch
+# Build the project
+.\mvnw.cmd clean install
+
+# Run the application
+.\mvnw.cmd spring-boot:run
+```
+
+##### Linux/macOS
 ```bash
-./mvn clean install
-cd demo
+# Make mvnw executable
+chmod +x mvnw
+
+# Build the project
+./mvnw clean install
+
+# Run the application
+./mvnw spring-boot:run
+```
+
+#### Using Maven CLI
+
+##### All Platforms
+```bash
+# Build the project
+mvn clean install
+
+# Run the application
 mvn spring-boot:run
 ```
-Application starts at `http://localhost:8080`
+
+The application will start at `http://localhost:8080`
 
 #### Docker Environment
 
-Development with hot reload
+##### Development with hot reload
 ```bash
+# Using Docker Compose
 docker-compose up --build
 ```
 
-Monitoring stack (Prometheus & Grafana)
+##### Monitoring stack (Prometheus & Grafana)
 ```bash
 docker-compose -f docker-compose-monitoring.yml up --build
 ```
+
+</details>
+
+<details>
+<summary>3. Verify Installation</summary>
+
+Once the application is running, you can verify the installation by accessing:
+
+- API Documentation: `http://localhost:8080/swagger-ui.html`
+- Health Check: `http://localhost:8080/actuator/health`
+- API Base URL: `http://localhost:8080/api/v1`
+
+If you see the Swagger UI or get a successful health check response, the application is running correctly.
 </details>
 
 ## 📚 API Documentation
