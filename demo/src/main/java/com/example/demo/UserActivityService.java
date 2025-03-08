@@ -15,7 +15,7 @@ public class UserActivityService {
     private final Map<Long, List<String>> userActivities = new HashMap<>();
 
     public UserActivityService(UserService userService) {
-        this.userService = userService;
+        this.userService = Objects.requireNonNull(userService, "UserService must not be null");
     }
 
     @Cacheable(value = "activityTrends", key = "#startDate")
@@ -102,7 +102,12 @@ public class UserActivityService {
     }
 
     private Map<LocalDateTime, Long> calculateNewUserGrowth(LocalDateTime startDate) {
-        return new HashMap<>(); 
+        return lastLoginTimes.entrySet().stream()
+            .filter(entry -> entry.getValue().isAfter(startDate))
+            .collect(Collectors.groupingBy(
+                entry -> entry.getValue().toLocalDate().atStartOfDay(),
+                Collectors.counting()
+            ));
     }
 
     private double calculateRetentionRate(LocalDateTime startDate) {
@@ -132,15 +137,57 @@ public class UserActivityService {
     }
 
     private Map<LocalDateTime, Double> calculateDailyRetention(LocalDateTime startDate) {
-        return new HashMap<>(); 
+        Map<LocalDateTime, Double> retention = new HashMap<>();
+        LocalDateTime currentDate = LocalDateTime.now();
+        
+        while (currentDate.isAfter(startDate)) {
+            LocalDateTime date = currentDate;
+            long totalUsers = userService.getAllUsers().size();
+            long retainedUsers = lastLoginTimes.values().stream()
+                .filter(loginTime -> loginTime.isAfter(date))
+                .count();
+            
+            retention.put(date, totalUsers > 0 ? (double) retainedUsers / totalUsers * 100 : 0.0);
+            currentDate = currentDate.minusDays(1);
+        }
+        
+        return retention;
     }
 
     private Map<LocalDateTime, Double> calculateWeeklyRetention(LocalDateTime startDate) {
-        return new HashMap<>(); 
+        Map<LocalDateTime, Double> retention = new HashMap<>();
+        LocalDateTime currentDate = LocalDateTime.now();
+        
+        while (currentDate.isAfter(startDate)) {
+            LocalDateTime weekStart = currentDate;
+            long totalUsers = userService.getAllUsers().size();
+            long retainedUsers = lastLoginTimes.values().stream()
+                .filter(loginTime -> loginTime.isAfter(weekStart))
+                .count();
+            
+            retention.put(weekStart, totalUsers > 0 ? (double) retainedUsers / totalUsers * 100 : 0.0);
+            currentDate = currentDate.minusWeeks(1);
+        }
+        
+        return retention;
     }
 
     private Map<LocalDateTime, Double> calculateMonthlyRetention(LocalDateTime startDate) {
-        return new HashMap<>(); 
+        Map<LocalDateTime, Double> retention = new HashMap<>();
+        LocalDateTime currentDate = LocalDateTime.now();
+        
+        while (currentDate.isAfter(startDate)) {
+            LocalDateTime monthStart = currentDate;
+            long totalUsers = userService.getAllUsers().size();
+            long retainedUsers = lastLoginTimes.values().stream()
+                .filter(loginTime -> loginTime.isAfter(monthStart))
+                .count();
+            
+            retention.put(monthStart, totalUsers > 0 ? (double) retainedUsers / totalUsers * 100 : 0.0);
+            currentDate = currentDate.minusMonths(1);
+        }
+        
+        return retention;
     }
 
     private List<Map<String, Object>> getMostActiveUsers() {

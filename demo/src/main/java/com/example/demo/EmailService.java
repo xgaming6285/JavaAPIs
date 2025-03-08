@@ -47,13 +47,15 @@ public class EmailService {
         
         try {
             mailSender.send(email);
-            logger.info("Email sent successfully to {}", to);
+            if (logger.isInfoEnabled()) {
+                logger.info("Email sent successfully to {}", to);
+            }
         } catch (MailAuthenticationException e) {
             logger.error("Email authentication failed when sending to {}", to);
-            throw new EmailServiceException("Failed to authenticate with email server");
+            throw new EmailServiceException("Failed to authenticate with email server", e);
         } catch (Exception e) {
             logger.error("Failed to send email to {}: {}", to, e.getMessage());
-            throw new EmailServiceException("Failed to send email");
+            throw new EmailServiceException("Failed to send email", e);
         }
     }
 
@@ -62,7 +64,7 @@ public class EmailService {
             new InternetAddress(email).validate();
         } catch (AddressException e) {
             logger.error("Invalid email address: {}", email);
-            throw new EmailServiceException("Invalid email address");
+            throw new EmailServiceException("Invalid email address", e);
         }
     }
 }

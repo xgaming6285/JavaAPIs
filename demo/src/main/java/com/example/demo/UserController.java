@@ -19,6 +19,7 @@ import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -30,7 +31,8 @@ public class UserController {
     private final UserService userService;
 
     public UserController(UserService userService, MeterRegistry registry) {
-        this.userService = userService;
+        this.userService = Objects.requireNonNull(userService, "UserService must not be null");
+        Objects.requireNonNull(registry, "MeterRegistry must not be null");
         this.userCreationCounter = Counter.builder("api.user.creation")
             .description("Number of users created")
             .register(registry);
@@ -61,7 +63,9 @@ public class UserController {
     @RateLimiter(name = "createUser")
     @Operation(summary = "Create a new user")
     public ResponseEntity<UserDTO> createUser(@Valid @RequestBody CreateUserDTO createUserDTO) {
-        logger.info("Creating new user with username: {}", createUserDTO.getUsername());
+        if (logger.isInfoEnabled()) {
+            logger.info("Creating new user with username: {}", createUserDTO.getUsername());
+        }
         try {
             User user = new User(createUserDTO.getUsername(), 
                                createUserDTO.getEmail(), 
@@ -71,7 +75,9 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CREATED)
                                .body(convertToDTO(created));
         } catch (Exception e) {
-            logger.error("Error creating user: {}", e.getMessage(), e);
+            if (logger.isErrorEnabled()) {
+                logger.error("Error creating user: {}", e.getMessage(), e);
+            }
             throw e;
         }
     }

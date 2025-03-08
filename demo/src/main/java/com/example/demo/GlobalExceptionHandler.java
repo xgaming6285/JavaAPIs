@@ -20,7 +20,9 @@ public class GlobalExceptionHandler {
     @ApiResponse(responseCode = "400", description = "Bad Request", 
                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
-        logger.error("Runtime exception occurred: {}", ex.getMessage(), ex);
+        if (logger.isErrorEnabled()) {
+            logger.error("Runtime exception occurred: {}", ex.getMessage(), ex);
+        }
         return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
     
@@ -28,7 +30,9 @@ public class GlobalExceptionHandler {
     @ApiResponse(responseCode = "404", description = "User Not Found", 
                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
-        logger.warn("User not found: {}", ex.getMessage());
+        if (logger.isWarnEnabled()) {
+            logger.warn("User not found: {}", ex.getMessage());
+        }
         return createErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
     
@@ -36,7 +40,9 @@ public class GlobalExceptionHandler {
     @ApiResponse(responseCode = "503", description = "Email Service Error", 
                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<ErrorResponse> handleEmailServiceException(EmailServiceException ex) {
-        logger.error("Email service error: {}", ex.getMessage(), ex);
+        if (logger.isErrorEnabled()) {
+            logger.error("Email service error: {}", ex.getMessage(), ex);
+        }
         return createErrorResponse(ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
     }
     
@@ -49,7 +55,9 @@ public class GlobalExceptionHandler {
             .reduce((a, b) -> a + "; " + b)
             .orElse("Validation failed");
             
-        logger.warn("Validation error: {}", errorMessage);
+        if (logger.isWarnEnabled()) {
+            logger.warn("Validation error: {}", errorMessage);
+        }
         return createErrorResponse(errorMessage, HttpStatus.BAD_REQUEST);
     }
 
@@ -57,7 +65,9 @@ public class GlobalExceptionHandler {
     @ApiResponse(responseCode = "500", description = "Internal Server Error", 
                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
-        logger.error("Unexpected error occurred: {}", ex.getMessage(), ex);
+        if (logger.isErrorEnabled()) {
+            logger.error("Unexpected error occurred: {}", ex.getMessage(), ex);
+        }
         return createErrorResponse("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
     }
     

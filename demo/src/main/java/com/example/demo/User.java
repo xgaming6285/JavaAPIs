@@ -182,7 +182,7 @@ public class User {
         }
 
         public UserBuilder roles(Set<String> roles) {
-            this.roles = roles;
+            this.roles = roles != null ? new HashSet<>(roles) : new HashSet<>();
             return this;
         }
 
@@ -190,7 +190,7 @@ public class User {
             User user = new User(username, email, password);
             user.setToken(token);
             user.setActive(active);
-            user.setRoles(roles);
+            user.setRoles(new HashSet<>(roles));
             return user;
         }
     }

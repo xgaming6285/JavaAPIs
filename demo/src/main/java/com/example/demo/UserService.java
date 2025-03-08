@@ -46,10 +46,12 @@ public class UserService {
     }
 
     public User createUser(User user) {
-        logger.info("Creating user with username: {}", user.getUsername());
+        if (logger.isInfoEnabled()) {
+            logger.info("Creating user with username: {}", user.getUsername());
+        }
         
         // Initialize with ROLE_USER if roles are empty
-        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+        if (user.getRoles().isEmpty()) {
             user.setRoles(Set.of("ROLE_USER"));
         }
         
@@ -62,7 +64,9 @@ public class UserService {
             userCache.put(savedUser.getId(), savedUser);
             return savedUser;
         } catch (Exception e) {
-            logger.error("Error creating user: {}", e.getMessage());
+            if (logger.isErrorEnabled()) {
+                logger.error("Error creating user: {}", e.getMessage());
+            }
             throw new RuntimeException("Failed to create user", e);
         }
     }
@@ -174,7 +178,7 @@ public class UserService {
         if (userDetails.getPassword() != null && !isPasswordHashed(userDetails.getPassword())) {
             user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
         }
-        if (userDetails.getRoles() != null && !userDetails.getRoles().isEmpty()) {
+        if (!userDetails.getRoles().isEmpty()) {
             user.setRoles(userDetails.getRoles());
         }
         user.setActive(userDetails.isActive());
@@ -216,7 +220,9 @@ public class UserService {
             userCache.put(updatedUser.getId(), updatedUser);
             return updatedUser;
         } catch (Exception e) {
-            logger.error("Error updating user roles: {}", e.getMessage());
+            if (logger.isErrorEnabled()) {
+                logger.error("Error updating user roles: {}", e.getMessage());
+            }
             throw new RuntimeException("Failed to update user roles", e);
         }
     }
@@ -279,7 +285,9 @@ public class UserService {
     }
 
     public User fallbackGetUserById(Long id, Exception ex) {
-        logger.warn("Circuit breaker fallback for user {}: {}", id, ex.getMessage());
+        if (logger.isWarnEnabled()) {
+            logger.warn("Circuit breaker fallback for user {}: {}", id, ex.getMessage());
+        }
         return userCache.get(id);
     }
 }

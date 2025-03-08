@@ -19,6 +19,7 @@ import jakarta.validation.constraints.Max;
 import java.util.Map;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/analytics")
@@ -32,8 +33,8 @@ public class AnalyticsController {
     private final UserActivityService userActivityService;
 
     public AnalyticsController(UserService userService, UserActivityService userActivityService) {
-        this.userService = userService;
-        this.userActivityService = userActivityService;
+        this.userService = Objects.requireNonNull(userService, "UserService must not be null");
+        this.userActivityService = Objects.requireNonNull(userActivityService, "UserActivityService must not be null");
     }
 
     @Timed(value = "api.analytics.userStats", description = "Time taken to fetch user statistics")
@@ -46,7 +47,9 @@ public class AnalyticsController {
     @Cacheable(value = "userStats", key = "'stats'", condition = "#result != null")
     public ResponseEntity<Map<String, Object>> getUserStats() {
         try {
-            logger.debug("Fetching user statistics");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Fetching user statistics");
+            }
             Map<String, Object> stats = Map.of(
                 "totalUsers", userService.getTotalUsers(),
                 "activeUsers", userService.getActiveUsers().size(),
@@ -54,7 +57,9 @@ public class AnalyticsController {
                 "usersByRole", userService.getUserCountByRole(),
                 "averageRolesPerUser", userService.getAverageRolesPerUser()
             );
-            logger.debug("Successfully retrieved user statistics");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Successfully retrieved user statistics");
+            }
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             logger.error("Error fetching user statistics: {}", e.getMessage(), e);
@@ -75,7 +80,9 @@ public class AnalyticsController {
             @Parameter(description = "Number of days to analyze", example = "7")
             @RequestParam(defaultValue = "7") @Min(1) @Max(MAX_DAYS) int days) {
         try {
-            logger.debug("Fetching activity trends for {} days", days);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Fetching activity trends for {} days", days);
+            }
             LocalDateTime startDate = LocalDateTime.now().minus(days, ChronoUnit.DAYS);
             Map<String, Object> trends = userActivityService.getActivityTrendsSince(startDate);
             return ResponseEntity.ok(trends);
@@ -95,7 +102,9 @@ public class AnalyticsController {
     @Cacheable(value = "roleDistribution", key = "'distribution'", condition = "#result != null")
     public ResponseEntity<Map<String, Object>> getRoleDistribution() {
         try {
-            logger.debug("Fetching role distribution");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Fetching role distribution");
+            }
             Map<String, Object> distribution = Map.of(
                 "roleDistribution", userService.getRoleDistribution(),
                 "commonRoleCombinations", userService.getCommonRoleCombinations(),
@@ -121,7 +130,9 @@ public class AnalyticsController {
             @Parameter(description = "Number of days to analyze", example = "30")
             @RequestParam(defaultValue = "30") @Min(1) @Max(MAX_DAYS) int days) {
         try {
-            logger.debug("Fetching user growth metrics for {} days", days);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Fetching user growth metrics for {} days", days);
+            }
             LocalDateTime startDate = LocalDateTime.now().minus(days, ChronoUnit.DAYS);
             Map<String, Object> growth = userActivityService.getUserGrowthMetrics(startDate);
             return ResponseEntity.ok(growth);
@@ -141,7 +152,9 @@ public class AnalyticsController {
     @Cacheable(value = "securityMetrics", key = "'metrics'", condition = "#result != null")
     public ResponseEntity<Map<String, Object>> getSecurityMetrics() {
         try {
-            logger.debug("Fetching security metrics");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Fetching security metrics");
+            }
             Map<String, Object> metrics = userActivityService.getSecurityMetrics();
             return ResponseEntity.ok(metrics);
         } catch (Exception e) {
@@ -163,7 +176,9 @@ public class AnalyticsController {
             @Parameter(description = "Number of days to analyze", example = "30")
             @RequestParam(defaultValue = "30") @Min(1) @Max(MAX_DAYS) int days) {
         try {
-            logger.debug("Fetching user retention metrics for {} days", days);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Fetching user retention metrics for {} days", days);
+            }
             LocalDateTime startDate = LocalDateTime.now().minus(days, ChronoUnit.DAYS);
             Map<String, Object> retention = userActivityService.getUserRetentionMetrics(startDate);
             return ResponseEntity.ok(retention);
@@ -186,7 +201,9 @@ public class AnalyticsController {
             @Parameter(description = "Number of days to analyze", example = "7")
             @RequestParam(defaultValue = "7") @Min(1) @Max(MAX_DAYS) int days) {
         try {
-            logger.debug("Fetching user behavior analysis for {} days", days);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Fetching user behavior analysis for {} days", days);
+            }
             LocalDateTime startDate = LocalDateTime.now().minus(days, ChronoUnit.DAYS);
             Map<String, Object> behavior = userActivityService.getUserBehaviorAnalysis(startDate);
             return ResponseEntity.ok(behavior);
