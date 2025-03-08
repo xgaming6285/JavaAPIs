@@ -25,7 +25,7 @@ logs/
 logs/**/*
 
 # Runtime data
-demo/grafana
+demo/grafana/
 
 # Compiled class files
 *.class
