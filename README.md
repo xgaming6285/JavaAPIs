@@ -1,62 +1,73 @@
 # Spring Boot User Management API 🚀
 
+<div align="center">
+
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://openjdk.java.net/projects/jdk/17/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![License](https://img.shields.io/badge/License-Custom-blue.svg)](LICENSE)
 
+</div>
+
+<p align="center">
 A robust and scalable User Management API built with Spring Boot, featuring comprehensive user operations, monitoring, and security features. This API provides a complete solution for user management with advanced features like email verification, password reset, and comprehensive monitoring.
+</p>
 
-## 🌟 Features
+<details>
+<summary>🌟 Features</summary>
 
-- **User Management**
-  - CRUD operations for users
-  - Email verification system
-  - Password reset functionality
-  - Search and filter capabilities
-  - Role-based user management
-  - Pagination and sorting support
+### User Management
+- ✅ CRUD operations for users
+- 📧 Email verification system
+- 🔑 Password reset functionality
+- 🔍 Search and filter capabilities
+- 👥 Role-based user management
+- 📄 Pagination and sorting support
 
-- **Security & Performance**
-  - BCrypt password encryption
-  - Rate limiting for critical endpoints
-  - Circuit breaker pattern implementation
-  - Async operations support
-  - Caching mechanism
-  - Email verification workflow
+### Security & Performance
+- 🔒 BCrypt password encryption
+- ⚡ Rate limiting for critical endpoints
+- 🔄 Circuit breaker pattern implementation
+- 🚀 Async operations support
+- 💾 Caching mechanism
+- ✉️ Email verification workflow
 
-- **Monitoring & Observability**
-  - Prometheus metrics integration
-  - Custom Grafana dashboards
-  - Spring Boot Actuator endpoints
-  - Comprehensive logging system
-  - Health check endpoints
-  - Performance metrics tracking
+### Monitoring & Observability
+- 📊 Prometheus metrics integration
+- 📈 Custom Grafana dashboards
+- 🔍 Spring Boot Actuator endpoints
+- 📝 Comprehensive logging system
+- ❤️ Health check endpoints
+- 📉 Performance metrics tracking
 
-- **Documentation**
-  - OpenAPI 3.0/Swagger integration
-  - API versioning
-  - Detailed endpoint documentation
-  - Response examples
-  - Error handling documentation
+### Documentation
+- 📚 OpenAPI 3.0/Swagger integration
+- 🔢 API versioning
+- 📖 Detailed endpoint documentation
+- 💡 Response examples
+- ⚠️ Error handling documentation
+
+</details>
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-
-- JDK 17 or later
-- Maven 3.6+
-- Docker & Docker Compose (for containerization)
-- SMTP Server access (for email functionality)
+| Requirement | Version |
+|------------|---------|
+| JDK | 17 or later |
+| Maven | 3.6+ |
+| Docker & Docker Compose | Latest |
+| SMTP Server | - |
 
 ### Environment Setup
 
-1. **Clone the repository**
+<details>
+<summary>1. Clone and Configure</summary>
+
    ```bash
    git clone https://github.com/xgaming6285/JavaAPIs.git
    cd demo
    ```
 
-2. **Configure Email Settings**
    Create `application-local.properties` inside "demo\src\main\resources\" with your email configuration:
    ```properties
    spring.mail.host=smtp.gmail.com
@@ -66,32 +77,32 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
    spring.mail.properties.mail.smtp.auth=true
    spring.mail.properties.mail.smtp.starttls.enable=true
    ```
+</details>
 
-### Running the Application
+<details>
+<summary>2. Run the Application</summary>
 
 #### Local Development
-1. **Build the application**
-   ```bash
-   ./mvn clean install
-   ```
 
-2. **Run the application**
-   ```bash
-   cd demo
-   mvn spring-boot:run
-   ```
-
-   The application will start at `http://localhost:8080`
+```bash
+./mvn clean install
+cd demo
+mvn spring-boot:run
+```
+Application starts at `http://localhost:8080`
 
 #### Docker Environment
-1. **Start with Docker Compose**
-   ```bash
-   # For development with hot reload
-   docker-compose up --build
 
-   # For monitoring stack (includes Prometheus & Grafana)
-   docker-compose -f docker-compose-monitoring.yml up --build
-   ```
+Development with hot reload
+```bash
+docker-compose up --build
+```
+
+Monitoring stack (Prometheus & Grafana)
+```bash
+docker-compose -f docker-compose-monitoring.yml up --build
+```
+</details>
 
 ## 📚 API Documentation
 
