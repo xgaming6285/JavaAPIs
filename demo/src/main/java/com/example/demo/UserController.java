@@ -122,4 +122,65 @@ public class UserController {
         User user = userService.getUserByIdWithCircuitBreaker(id);
         return ResponseEntity.ok(convertToDTO(user));
     }
+
+    @Operation(summary = "Get all active users")
+    @GetMapping("/active")
+    public ResponseEntity<List<UserDTO>> getActiveUsers() {
+        List<UserDTO> users = userService.getActiveUsers().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(users);
+    }
+
+    @Operation(summary = "Get all inactive users")
+    @GetMapping("/inactive")
+    public ResponseEntity<List<UserDTO>> getInactiveUsers() {
+        List<UserDTO> users = userService.getInactiveUsers().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(users);
+    }
+
+    @Operation(summary = "Get users by email domain")
+    @GetMapping("/by-domain")
+    public ResponseEntity<List<UserDTO>> getUsersByEmailDomain(
+            @RequestParam @NotBlank String domain) {
+        List<UserDTO> users = userService.getUsersByEmailDomain(domain).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(users);
+    }
+
+    @Operation(summary = "Get users by role")
+    @GetMapping("/by-role")
+    public ResponseEntity<List<UserDTO>> getUsersByRole(
+            @RequestParam @NotBlank String role) {
+        List<UserDTO> users = userService.getUsersByRole(role).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(users);
+    }
+
+    @Operation(summary = "Get users with minimum number of roles")
+    @GetMapping("/by-min-roles")
+    public ResponseEntity<List<UserDTO>> getUsersByMinimumRoles(
+            @RequestParam @Min(1) int minRoles) {
+        List<UserDTO> users = userService.getUsersByMinimumRoles(minRoles).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(users);
+    }
+
+    @Operation(summary = "Search users by multiple criteria")
+    @GetMapping("/search/advanced")
+    public ResponseEntity<List<UserDTO>> searchUsers(
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) String role) {
+        List<UserDTO> users = userService.searchUsers(username, email, active, role).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(users);
+    }
 }

@@ -171,4 +171,28 @@ public class UserService {
             .map(entry -> userRepository.findById(entry.getKey()).orElse(null))
             .findFirst();
     }
+
+    public List<User> getActiveUsers() {
+        return userRepository.findByActiveTrue();
+    }
+
+    public List<User> getInactiveUsers() {
+        return userRepository.findByActiveFalse();
+    }
+
+    public List<User> getUsersByEmailDomain(String domain) {
+        return userRepository.findByEmailDomain(domain);
+    }
+
+    public List<User> getUsersByRole(String role) {
+        return userRepository.findByRolesContaining(role);
+    }
+
+    public List<User> getUsersByMinimumRoles(int minRoles) {
+        return userRepository.findByMinimumRoles(minRoles);
+    }
+
+    public List<User> searchUsers(String username, String email, Boolean active, String role) {
+        return userRepository.findByMultipleCriteria(username, email, active, role);
+    }
 }
