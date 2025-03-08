@@ -9,7 +9,7 @@
 </div>
 
 <p align="center">
-A robust and scalable User Management API built with Spring Boot, featuring comprehensive user operations, monitoring, and security features. This API provides a complete solution for user management with advanced features like email verification, password reset, and comprehensive monitoring.
+A robust and scalable User Management API built with Spring Boot, featuring comprehensive user operations, monitoring, and security features. This API provides a complete solution for user management with advanced features like email verification, password reset, role management, and comprehensive monitoring.
 </p>
 
 <details>
@@ -20,7 +20,10 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
 - 📧 Email verification system
 - 🔑 Password reset functionality
 - 🔍 Search and filter capabilities
-- 👥 Role-based user management
+- 👥 Advanced role-based user management
+  - Role assignment and removal
+  - Multi-role support
+  - Role-based filtering
 - 📄 Pagination and sorting support
 
 ### Security & Performance
@@ -109,7 +112,18 @@ docker-compose -f docker-compose-monitoring.yml up --build
 ### Available Endpoints
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/v1/users/register` | POST | User Registration |
+| `/api/v1/users` | POST | Create User |
+| `/api/v1/users/{id}` | GET | Get User by ID |
+| `/api/v1/users/{id}` | PUT | Update User |
+| `/api/v1/users/{id}` | DELETE | Delete User |
+| `/api/v1/users/active` | GET | Get Active Users |
+| `/api/v1/users/inactive` | GET | Get Inactive Users |
+| `/api/v1/users/by-role` | GET | Get Users by Role |
+| `/api/v1/users/by-domain` | GET | Get Users by Email Domain |
+| `/api/v1/users/by-min-roles` | GET | Get Users by Minimum Roles |
+| `/api/v1/users/{id}/roles` | PUT | Update User Roles |
+| `/api/v1/users/search/advanced` | GET | Advanced User Search |
+| `/api/auth/register` | POST | User Registration |
 | `/api/auth/login` | POST | User Login |
 | `/api/auth/reset-password` | POST | Password Reset |
 | `/api/auth/verify` | GET | Email Verification |
