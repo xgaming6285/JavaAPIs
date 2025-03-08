@@ -113,3 +113,6 @@ out/
 *.swo
 .DS_Store
 Thumbs.db
+
+# Application properties with sensitive data
+application-local.properties
