@@ -95,111 +95,56 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
 
 ## 📚 API Documentation
 
-### Swagger Documentation
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI Spec: `http://localhost:8080/api-docs`
+### Available Endpoints
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/users/register` | POST | User Registration |
+| `/api/auth/login` | POST | User Login |
+| `/api/auth/reset-password` | POST | Password Reset |
+| `/api/auth/verify` | GET | Email Verification |
+| `/api/health` | GET | Health Check |
 
-### Key Endpoints
-- User Registration: `POST /api/v1/users/register`
-- User Login: `POST /api/auth/login`
-- Password Reset: `POST /api/auth/reset-password`
-- Email Verification: `GET /api/auth/verify`
-- Health Check: `GET /api/health`
+### Documentation Links
+- 📘 Swagger UI: `http://localhost:8080/swagger-ui.html`
+- 📗 OpenAPI Spec: `http://localhost:8080/api-docs`
 
 ## 🔍 Monitoring Stack
 
-### Available Endpoints
-- Spring Actuator: `http://localhost:8080/actuator`
-- Prometheus Metrics: `http://localhost:8080/actuator/prometheus`
-- Grafana Dashboard: `http://localhost:3000`
-  - Default credentials: admin/admin
-  - Preconfigured dashboards available in `grafana/dashboards`
+<details>
+<summary>Available Monitoring Endpoints</summary>
 
-### Logging
-- Application logs: `logs/application.log`
-- Configurable log levels via Actuator
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| Spring Actuator | `http://localhost:8080/actuator` | - |
+| Prometheus | `http://localhost:8080/actuator/prometheus` | - |
+| Grafana | `http://localhost:3000` | admin/admin |
+
+</details>
 
 ## 🛠️ Technology Stack
 
-- **Core Framework**
-  - Spring Boot 3.2.0
-  - Spring Data JPA
-  - Spring Security Crypto
+<details>
+<summary>View Full Stack</summary>
 
-- **Database**
-  - H2 Database (dev/test)
-  - Supports easy migration to PostgreSQL/MySQL
+| Category | Technologies |
+|----------|-------------|
+| Core Framework | Spring Boot 3.2.0, Spring Data JPA, Spring Security Crypto |
+| Database | H2 Database (dev/test), PostgreSQL/MySQL support |
+| Monitoring | Prometheus, Grafana, Resilience4j, Spring Boot Actuator |
+| Documentation & Testing | SpringDoc OpenAPI, JUnit 5, Spring Boot Test |
+| DevOps | Docker, Docker Compose, Maven |
 
-- **Monitoring & Reliability**
-  - Prometheus
-  - Grafana
-  - Resilience4j
-  - Spring Boot Actuator
-
-- **Documentation & Testing**
-  - SpringDoc OpenAPI
-  - JUnit 5
-  - Spring Boot Test
-
-- **DevOps**
-  - Docker
-  - Docker Compose
-  - Maven
-
-## 📊 Project Structure
-```
-demo/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/example/demo/
-│   │   │       ├── config/
-│   │   │       ├── controller/
-│   │   │       ├── service/
-│   │   │       ├── repository/
-│   │   │       ├── model/
-│   │   │       └── exception/
-│   │   └── resources/
-│   └── test/
-├── docker/
-├── grafana/
-│   ├── dashboards/
-│   └── provisioning/
-├── docker-compose.yml
-├── docker-compose-monitoring.yml
-├── Dockerfile
-├── pom.xml
-└── README.md
-```
-
-## 🔒 Security Features
-
-- BCrypt password encryption
-- Rate limiting for authentication endpoints
-- Email verification system
-- Secure password reset workflow
-- Circuit breaker for external services
-- Input validation and sanitization
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under a custom license - see the [LICENSE](LICENSE) file for details.
+</details>
 
 ## 📫 Support & Contact
 
 For support and questions:
-- Open an issue in the repository
-- Contact: [Daniel](mailto:dani034406@gmail.com)
+- 🐛 [Open an issue](https://github.com/xgaming6285/JavaAPIs/issues)
+- 📧 Contact: [Daniel](mailto:dani034406@gmail.com)
 
 ---
 
+<div align="center">
 Made with ❤️ using Spring Boot
+</div>
 
