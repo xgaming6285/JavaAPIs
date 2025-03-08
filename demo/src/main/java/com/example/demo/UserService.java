@@ -17,6 +17,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import java.util.HashSet;
 
 @Service
 public class UserService {
@@ -44,7 +45,11 @@ public class UserService {
 
     public User createUser(User user) {
         logger.info("Creating user with username: {}", user.getUsername());
-        user.setRoles(Set.of("ROLE_USER"));
+        
+        // Initialize with ROLE_USER if roles are empty
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            user.setRoles(Set.of("ROLE_USER"));
+        }
         
         if (!isPasswordHashed(user.getPassword())) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -194,5 +199,22 @@ public class UserService {
 
     public List<User> searchUsers(String username, String email, Boolean active, String role) {
         return userRepository.findByMultipleCriteria(username, email, active, role);
+    }
+
+    public User updateUserRoles(Long id, Set<String> roles) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new UserNotFoundException("User not found"));
+        
+        user.getRoles().clear();  
+        user.setRoles(new HashSet<>(roles));  
+        
+        try {
+            User updatedUser = userRepository.save(user);
+            userCache.put(updatedUser.getId(), updatedUser);
+            return updatedUser;
+        } catch (Exception e) {
+            logger.error("Error updating user roles: {}", e.getMessage());
+            throw new RuntimeException("Failed to update user roles", e);
+        }
     }
 }

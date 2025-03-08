@@ -39,7 +39,10 @@ public class User {
     private boolean active = false;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(
+        name = "user_roles",
+        joinColumns = @JoinColumn(name = "user_id")
+    )
     @Column(name = "role")
     private Set<String> roles = new HashSet<>();
 
@@ -103,7 +106,23 @@ public class User {
     }
 
     public void setRoles(Set<String> roles) {
-        this.roles = new HashSet<>(roles);
+        this.roles.clear();
+        if (roles != null) {
+            this.roles.addAll(roles);
+        }
+    }
+
+    public void addRole(String role) {
+        if (this.roles == null) {
+            this.roles = new HashSet<>();
+        }
+        this.roles.add(role);
+    }
+
+    public void removeRole(String role) {
+        if (this.roles != null) {
+            this.roles.remove(role);
+        }
     }
 
     @Override

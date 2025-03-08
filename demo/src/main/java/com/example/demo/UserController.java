@@ -183,4 +183,13 @@ public class UserController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(users);
     }
+
+    @PutMapping("/{id}/roles")
+    @Operation(summary = "Update user roles")
+    public ResponseEntity<UserDTO> updateUserRoles(
+            @PathVariable @Min(1) Long id,
+            @Valid @RequestBody UpdateRolesDTO rolesDTO) {
+        User updatedUser = userService.updateUserRoles(id, rolesDTO.getRoles());
+        return ResponseEntity.ok(convertToDTO(updatedUser));
+    }
 }
