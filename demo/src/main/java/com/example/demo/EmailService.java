@@ -2,14 +2,18 @@ package com.example.demo;
 
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * Service for handling email-related operations.
+ * Provides functionality for sending verification and password reset emails.
+ */
 @Service
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
@@ -47,14 +51,12 @@ public class EmailService {
         
         try {
             mailSender.send(email);
-            if (logger.isInfoEnabled()) {
-                logger.info("Email sent successfully to {}", to);
-            }
+            logger.info("Email sent successfully to {}", to);
         } catch (MailAuthenticationException e) {
-            logger.error("Email authentication failed when sending to {}", to);
+            logger.error("Email authentication failed when sending to {}", to, e);
             throw new EmailServiceException("Failed to authenticate with email server", e);
         } catch (Exception e) {
-            logger.error("Failed to send email to {}: {}", to, e.getMessage());
+            logger.error("Failed to send email to {}: {}", to, e.getMessage(), e);
             throw new EmailServiceException("Failed to send email", e);
         }
     }

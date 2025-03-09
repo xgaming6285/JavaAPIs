@@ -27,14 +27,14 @@ public class UserService {
     private static final String USER_NOT_FOUND = "User not found";
 
     @Autowired
-    private UserRepository userRepository;
+    protected UserRepository userRepository;
     
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    protected PasswordEncoder passwordEncoder;
     
     private final AtomicInteger failureCounter = new AtomicInteger(0);
-    private final Map<Long, User> userCache = new ConcurrentHashMap<>();
-    private final Map<Long, String> verificationTokenCache = new ConcurrentHashMap<>();
+    protected Map<Long, User> userCache = new ConcurrentHashMap<>();
+    protected Map<Long, String> verificationTokenCache = new ConcurrentHashMap<>();
 
     public List<User> getAllUsers() {
         return userRepository.findAll();

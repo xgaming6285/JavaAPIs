@@ -1,26 +1,32 @@
 package com.example.demo;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.micrometer.core.annotation.Timed;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.http.HttpStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
-
-import java.util.Map;
+import jakarta.validation.constraints.Min;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controller handling analytics endpoints for user data.
+ * Provides various metrics and insights about user behavior, activity, and system usage.
+ */
 @RestController
 @RequestMapping("/api/v1/analytics")
 @Tag(name = "User Analytics", description = "Advanced analytics endpoints for user data")
@@ -32,13 +38,27 @@ public class AnalyticsController {
     private final UserService userService;
     private final UserActivityService userActivityService;
 
+    /**
+     * Constructs an AnalyticsController with required services.
+     *
+     * @param userService Service for user-related operations
+     * @param userActivityService Service for user activity tracking
+     */
     public AnalyticsController(UserService userService, UserActivityService userActivityService) {
         this.userService = Objects.requireNonNull(userService, "UserService must not be null");
         this.userActivityService = Objects.requireNonNull(userActivityService, "UserActivityService must not be null");
     }
 
+    /**
+     * Retrieves comprehensive user statistics.
+     *
+     * @return ResponseEntity containing user statistics
+     */
     @Timed(value = "api.analytics.userStats", description = "Time taken to fetch user statistics")
-    @Operation(summary = "Get user statistics", description = "Retrieves comprehensive user statistics including total, active, and inactive users")
+    @Operation(
+        summary = "Get user statistics",
+        description = "Retrieves comprehensive user statistics including total, active, and inactive users"
+    )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved user statistics"),
         @ApiResponse(responseCode = "500", description = "Internal server error while fetching statistics")
@@ -67,8 +87,17 @@ public class AnalyticsController {
         }
     }
 
+    /**
+     * Retrieves user activity trends for a specified time period.
+     *
+     * @param days Number of days to analyze
+     * @return ResponseEntity containing activity trends
+     */
     @Timed(value = "api.analytics.activityTrends")
-    @Operation(summary = "Get user activity trends", description = "Retrieves user activity trends for the specified number of days")
+    @Operation(
+        summary = "Get user activity trends",
+        description = "Retrieves user activity trends for the specified number of days"
+    )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved activity trends"),
         @ApiResponse(responseCode = "400", description = "Invalid days parameter"),
@@ -92,6 +121,11 @@ public class AnalyticsController {
         }
     }
 
+    /**
+     * Retrieves analysis of role distribution among users.
+     *
+     * @return ResponseEntity containing role distribution data
+     */
     @Timed(value = "api.analytics.roleDistribution")
     @Operation(summary = "Get role distribution analysis")
     @ApiResponses(value = {
@@ -117,6 +151,12 @@ public class AnalyticsController {
         }
     }
 
+    /**
+     * Retrieves user growth metrics over time.
+     *
+     * @param days Number of days to analyze
+     * @return ResponseEntity containing growth metrics
+     */
     @Timed(value = "api.analytics.userGrowth")
     @Operation(summary = "Get user growth metrics")
     @ApiResponses(value = {
@@ -142,6 +182,11 @@ public class AnalyticsController {
         }
     }
 
+    /**
+     * Retrieves security-related metrics.
+     *
+     * @return ResponseEntity containing security metrics
+     */
     @Timed(value = "api.analytics.securityMetrics")
     @Operation(summary = "Get security metrics")
     @ApiResponses(value = {
@@ -163,6 +208,12 @@ public class AnalyticsController {
         }
     }
 
+    /**
+     * Retrieves user retention metrics.
+     *
+     * @param days Number of days to analyze
+     * @return ResponseEntity containing retention metrics
+     */
     @Timed(value = "api.analytics.userRetention")
     @Operation(summary = "Get user retention metrics")
     @ApiResponses(value = {
@@ -188,6 +239,12 @@ public class AnalyticsController {
         }
     }
 
+    /**
+     * Retrieves user behavior analysis.
+     *
+     * @param days Number of days to analyze
+     * @return ResponseEntity containing behavior analysis
+     */
     @Timed(value = "api.analytics.userBehavior")
     @Operation(summary = "Get user behavior analysis")
     @ApiResponses(value = {

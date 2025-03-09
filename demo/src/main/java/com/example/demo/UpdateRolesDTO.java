@@ -10,6 +10,7 @@ public class UpdateRolesDTO {
     private Set<String> roles;
 
     public UpdateRolesDTO() {
+        this.roles = new HashSet<>();
     }
 
     public UpdateRolesDTO(Set<String> roles) {
