@@ -4,22 +4,23 @@
 
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://openjdk.java.net/projects/jdk/17/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![MongoDB](https://img.shields.io/badge/MongoDB-6.0-green.svg)](https://www.mongodb.com/)
 [![License](https://img.shields.io/badge/License-Custom-blue.svg)](LICENSE)
 
 </div>
 
 <p align="center">
-A robust and scalable User Management API built with Spring Boot, featuring comprehensive user operations, monitoring, and security features. This API provides a complete solution for user management with advanced features like email verification, password reset, role management, and comprehensive monitoring.
+A robust and scalable User Management API built with Spring Boot, featuring comprehensive user operations, monitoring, and security features. This API provides a complete solution for user management with advanced features like email verification, password reset, role management, comprehensive monitoring, and extensive logging capabilities using both SQL and MongoDB databases.
 </p>
 
 ## 🛠️ Technology Stack
 
 | Category | Technologies |
 |----------|-------------|
-| Core Framework | Spring Boot 3.2.0, Spring Data JPA, Spring Security Crypto |
-| Database | H2 Database (dev/test), PostgreSQL/MySQL support |
+| Core Framework | Spring Boot 3.2.0, Spring Data JPA, Spring Data MongoDB, Spring Security Crypto |
+| Database | H2 Database (dev/test), PostgreSQL (user data), MongoDB 6.0 (logging & analytics) |
 | Monitoring | Prometheus, Grafana, Resilience4j, Spring Boot Actuator |
-| Documentation & Testing | SpringDoc OpenAPI, JUnit 5, Spring Boot Test |
+| Documentation & Testing | SpringDoc OpenAPI, JUnit 5, Spring Boot Test, Embedded MongoDB |
 | DevOps | Docker, Docker Compose, Maven |
 
 ## 📑 Table of Contents
@@ -31,6 +32,7 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
 - [API Documentation](#-api-documentation)
 - [Monitoring & Analytics](#-monitoring--analytics)
 - [Security & Performance](#-security--performance)
+- [Data Architecture](#-data-architecture)
 - [Contributing](#-contributing)
 - [License](#-license)
 
@@ -52,6 +54,15 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
 - 🔑 Password reset functionality
 - ⚡ Rate limiting for critical endpoints
 - 🔄 Circuit breaker pattern implementation
+
+### Logging & Analytics (MongoDB)
+- 📊 User activity tracking
+- 📈 Analytics data collection
+- 🔐 Session management
+- 📝 Audit logging system
+- 🕒 Time-based data querying
+- 🔄 Automatic session expiration
+- 📱 Device and IP tracking
 
 ### Performance & Monitoring
 - 📊 Prometheus metrics integration
@@ -98,19 +109,40 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
    ```
 
 3. **Run the Application**
-   ```bash
-   # Using Maven Wrapper
-   ./mvnw spring-boot:run
 
-   # Using Maven CLI
-   mvn spring-boot:run
+   Using Docker (Recommended):
+   ```bash
+   # Start all services
+   docker-compose up -d
+
+   # Start monitoring stack
+   docker-compose -f docker-compose-monitoring.yml up -d
+   ```
+
+   Using Maven:
+   ```bash
+   ./mvn spring-boot:run
    ```
 
    The application will start at `http://localhost:8080`
 
 ### Configuration
 
-1. **Email Setup**
+1. **Database Setup**
+   - PostgreSQL (User Management):
+     ```properties
+     spring.datasource.url=jdbc:postgresql://localhost:5432/demo
+     spring.datasource.username=postgres
+     spring.datasource.password=postgres
+     ```
+   - MongoDB (Logging & Analytics):
+     ```properties
+     spring.data.mongodb.host=localhost
+     spring.data.mongodb.port=27017
+     spring.data.mongodb.database=analytics_db
+     ```
+
+2. **Email Setup**
    Create `application-local.properties` in "demo\src\main\resources\":
    ```properties
    spring.mail.host=smtp.gmail.com
@@ -119,15 +151,6 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
    spring.mail.password=your-app-password
    spring.mail.properties.mail.smtp.auth=true
    spring.mail.properties.mail.smtp.starttls.enable=true
-   ```
-
-2. **Docker Environment**
-   ```bash
-   # Development with hot reload
-   docker-compose up --build
-
-   # Monitoring stack
-   docker-compose -f docker-compose-monitoring.yml up --build
    ```
 
 3. **Verify Installation**
@@ -158,6 +181,41 @@ A robust and scalable User Management API built with Spring Boot, featuring comp
 | `/api/auth/verify` | GET | Email verification | No |
 | `/api/auth/reset-password` | POST | Request password reset | Yes |
 
+#### Logging & Analytics
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/logs/activity` | POST | Log user activity |
+| `/api/logs/analytics` | POST | Log analytics event |
+| `/api/logs/sessions` | POST | Create user session |
+| `/api/logs/audit` | POST | Create audit log |
+| `/api/logs/activity/user/{userId}` | GET | Get user activities |
+| `/api/logs/analytics/type/{eventType}` | GET | Get analytics by type |
+| `/api/logs/audit/user/{userId}` | GET | Get user audit logs |
+
+## 🗄️ Data Architecture
+
+### PostgreSQL (User Management)
+- User accounts and profiles
+- Role management
+- Authentication data
+- User preferences
+
+### MongoDB (Logging & Analytics)
+1. **User Activity Collection**
+   - User actions and behavior
+   - Timestamp tracking
+   - IP and device information
+
+2. **Analytics Collection**
+   - Event-based analytics
+   - Custom metadata storage
+   - User interaction metrics
+
+3. **Session Collection**
+   - Active session management
+   - Automatic expiration (TTL)
+   - Device tracking
+
 ### Data Import
 The user import feature accepts CSV files with the following format:
 ```csv
@@ -165,6 +223,11 @@ username,email,password,active,roles
 john_doe,john.doe@example.com,password123,true,USER,ADMIN
 jane_smith,jane.smith@example.com,password456,true,USER
 ```
+
+4. **Audit Collection**
+   - Resource modifications
+   - Change tracking
+   - Security events
 
 ## 🔍 Monitoring & Analytics
 
@@ -174,6 +237,15 @@ jane_smith,jane.smith@example.com,password456,true,USER
 | Grafana | `http://localhost:3000` | Metrics visualization |
 | Prometheus | `http://localhost:9090` | Metrics collection |
 | Spring Actuator | `http://localhost:8080/actuator` | Application health |
+| MongoDB Compass | `mongodb://localhost:27017` | Database management |
+
+### Analytics Capabilities
+- User behavior tracking
+- Session analytics
+- Resource usage patterns
+- Security event monitoring
+- Performance metrics
+- Custom event tracking
 
 ### Analytics Endpoints
 | Endpoint | Description |
@@ -194,7 +266,17 @@ resilience4j.ratelimiter.instances.registration.limitRefreshPeriod=1m
 # Login: 5 requests per minute
 resilience4j.ratelimiter.instances.login.limitForPeriod=5
 resilience4j.ratelimiter.instances.login.limitRefreshPeriod=1m
+
+# Password Reset: 3 requests per minute
+resilience4j.ratelimiter.instances.passwordReset.limitForPeriod=3
+resilience4j.ratelimiter.instances.passwordReset.limitRefreshPeriod=1m
 ```
+
+### Data Retention Policies
+- Session data: 1 hour (TTL index)
+- Activity logs: 30 days
+- Analytics data: 90 days
+- Audit logs: 1 year
 
 ## 🤝 Contributing
 Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.

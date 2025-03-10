@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username:}")
     private String fromEmail;
 
     @Value("${server.url:http://localhost:8080}")
@@ -41,6 +41,12 @@ public class EmailService {
     }
 
     private void sendEmail(String to, String subject, String message) {
+        // Skip sending email if configuration is missing
+        if (fromEmail == null || fromEmail.isEmpty()) {
+            logger.warn("Email service not configured. Skipping email send.");
+            return;
+        }
+
         validateEmail(to);
 
         SimpleMailMessage email = new SimpleMailMessage();
