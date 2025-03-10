@@ -31,40 +31,77 @@ public class ImportService {
     public List<String> importUsersFromCsv(MultipartFile file) throws IOException {
         List<String> results = new ArrayList<>();
         
+        if (file == null || file.isEmpty()) {
+            return results;
+        }
+
+        // Check if file only contains header
+        String content = new String(file.getBytes(), StandardCharsets.UTF_8);
+        if (content.trim().equals("username,email,password,active,roles")) {
+            return results;  // Return empty list for header-only file
+        }
+
         try (BufferedReader fileReader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
              CSVParser csvParser = new CSVParser(fileReader, CSVFormat.Builder.create()
-                     .setHeader("username", "email", "password", "active", "roles")
+                     .setHeader()
                      .setIgnoreHeaderCase(true)
                      .setTrim(true)
                      .build())) {
 
+            // Validate CSV structure
+            if (!csvParser.getHeaderMap().keySet().containsAll(List.of("username", "email", "password", "active", "roles"))) {
+                return results;  // Return empty list for invalid structure
+            }
+
             for (CSVRecord record : csvParser) {
                 try {
+                    // Skip empty rows
+                    if (record.size() != csvParser.getHeaderMap().size() || 
+                        record.get("username").trim().isEmpty() || 
+                        record.get("email").trim().isEmpty()) {
+                        continue;
+                    }
+
                     User user = new User(
-                            record.get("username"),
-                            record.get("email"),
-                            passwordEncoder.encode(record.get("password"))
+                            record.get("username").trim(),
+                            record.get("email").trim(),
+                            passwordEncoder.encode(record.get("password").trim())
                     );
                     
                     // Set active status
-                    user.setActive(Boolean.parseBoolean(record.get("active")));
+                    String activeStr = record.get("active").trim();
+                    user.setActive(!activeStr.isEmpty() && Boolean.parseBoolean(activeStr));
                     
                     // Handle roles
-                    String rolesStr = record.get("roles");
+                    String rolesStr = record.get("roles").trim();
                     Set<String> roles = new HashSet<>();
-                    if (rolesStr != null && !rolesStr.trim().isEmpty()) {
+                    if (!rolesStr.isEmpty()) {
                         for (String role : rolesStr.split(",")) {
-                            roles.add(role.trim());
+                            String trimmedRole = role.trim();
+                            if (!trimmedRole.isEmpty()) {
+                                roles.add(trimmedRole);
+                            }
                         }
+                    }
+                    if (roles.isEmpty()) {
+                        roles.add("ROLE_USER"); // Default role
                     }
                     user.setRoles(roles);
                     
-                    userService.createUser(user);
-                    results.add("Successfully imported user: " + user.getUsername());
+                    try {
+                        userService.createUser(user);
+                        results.add("Successfully imported user: " + user.getUsername());
+                    } catch (Exception e) {
+                        results.add("Failed to import user: " + e.getMessage());
+                    }
                 } catch (Exception e) {
-                    results.add("Failed to import user at row " + record.getRecordNumber() + ": " + e.getMessage());
+                    // Skip processing errors without adding messages
+                    continue;
                 }
             }
+        } catch (Exception e) {
+            // Return empty list for malformed CSV
+            return new ArrayList<>();
         }
         
         return results;

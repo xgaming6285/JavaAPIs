@@ -1,24 +1,28 @@
 package com.example.demo;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.test.context.ActiveProfiles;
+import org.mockito.Mock;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@WebMvcTest(GlobalExceptionHandler.class)
+@ActiveProfiles("test")
 class GlobalExceptionHandlerTest {
 
+    @Autowired
     private GlobalExceptionHandler handler;
 
-    @BeforeEach
-    void setUp() {
-        handler = new GlobalExceptionHandler();
-    }
+    @Mock
+    private BindingResult bindingResult;
 
     @Test
     void whenHandleRuntimeException_thenReturnsBadRequest() {
@@ -31,6 +35,7 @@ class GlobalExceptionHandlerTest {
         assertNotNull(body, "Response body should not be null");
         assertEquals("Test runtime exception", body.getMessage());
         assertEquals(400, body.getStatus());
+        assertNotNull(body.getTimestamp(), "Timestamp should not be null");
     }
 
     @Test
@@ -44,6 +49,7 @@ class GlobalExceptionHandlerTest {
         assertNotNull(body, "Response body should not be null");
         assertEquals("User not found", body.getMessage());
         assertEquals(404, body.getStatus());
+        assertNotNull(body.getTimestamp(), "Timestamp should not be null");
     }
 
     @Test
@@ -57,6 +63,7 @@ class GlobalExceptionHandlerTest {
         assertNotNull(body, "Response body should not be null");
         assertEquals("Email service error", body.getMessage());
         assertEquals(503, body.getStatus());
+        assertNotNull(body.getTimestamp(), "Timestamp should not be null");
     }
 
     @Test
@@ -75,6 +82,7 @@ class GlobalExceptionHandlerTest {
         assertNotNull(body, "Response body should not be null");
         assertEquals("field: Field error message", body.getMessage());
         assertEquals(400, body.getStatus());
+        assertNotNull(body.getTimestamp(), "Timestamp should not be null");
     }
 
     @Test
@@ -88,5 +96,6 @@ class GlobalExceptionHandlerTest {
         assertNotNull(body, "Response body should not be null");
         assertEquals("An unexpected error occurred", body.getMessage());
         assertEquals(500, body.getStatus());
+        assertNotNull(body.getTimestamp(), "Timestamp should not be null");
     }
 } 

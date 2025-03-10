@@ -17,7 +17,6 @@ public class LoggingController {
     @Autowired
     private MongoLoggingService mongoLoggingService;
 
-    // User Activity Logging
     @PostMapping("/activity")
     public ResponseEntity<UserActivity> logUserActivity(
             @RequestParam String userId,
@@ -35,7 +34,6 @@ public class LoggingController {
         return ResponseEntity.ok(activity);
     }
 
-    // Analytics Event Logging
     @PostMapping("/analytics")
     public ResponseEntity<AnalyticsData> logAnalyticsEvent(
             @RequestParam String eventType,
@@ -46,7 +44,6 @@ public class LoggingController {
         return ResponseEntity.ok(data);
     }
 
-    // Session Management
     @PostMapping("/sessions")
     public ResponseEntity<UserSession> createSession(
             @RequestParam String userId,
@@ -74,7 +71,6 @@ public class LoggingController {
         return ResponseEntity.ok().build();
     }
 
-    // Audit Logging
     @PostMapping("/audit")
     public ResponseEntity<AuditLog> createAuditLog(
             @RequestParam String userId,
@@ -97,7 +93,6 @@ public class LoggingController {
         return ResponseEntity.ok(log);
     }
 
-    // Retrieval Endpoints
     @GetMapping("/activity/user/{userId}")
     public ResponseEntity<List<UserActivity>> getUserActivities(@PathVariable String userId) {
         return ResponseEntity.ok(mongoLoggingService.getUserActivities(userId));

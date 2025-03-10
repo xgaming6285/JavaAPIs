@@ -19,7 +19,6 @@ public class AuditLog {
     private String status;
     private String details;
 
-    // Constructors
     public AuditLog() {}
 
     public AuditLog(String userId, String action, String resourceType, String resourceId, 
@@ -35,7 +34,6 @@ public class AuditLog {
         this.timestamp = Instant.now();
     }
 
-    // Getters and Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getUserId() { return userId; }

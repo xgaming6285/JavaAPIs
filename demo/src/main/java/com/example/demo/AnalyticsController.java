@@ -106,8 +106,8 @@ public class AnalyticsController {
     @GetMapping("/activity-trends")
     @Cacheable(value = "activityTrends", key = "#days", condition = "#result != null")
     public ResponseEntity<Map<String, Object>> getActivityTrends(
-            @Parameter(description = "Number of days to analyze", example = "7")
-            @RequestParam(defaultValue = "7") @Min(1) @Max(MAX_DAYS) int days) {
+            @Parameter(description = "Number of days to analyze", example = "30")
+            @RequestParam(defaultValue = "30") @Min(1) @Max(MAX_DAYS) int days) {
         try {
             if (logger.isDebugEnabled()) {
                 logger.debug("Fetching activity trends for {} days", days);
@@ -255,8 +255,8 @@ public class AnalyticsController {
     @GetMapping("/user-behavior")
     @Cacheable(value = "userBehavior", key = "#days", condition = "#result != null")
     public ResponseEntity<Map<String, Object>> getUserBehavior(
-            @Parameter(description = "Number of days to analyze", example = "7")
-            @RequestParam(defaultValue = "7") @Min(1) @Max(MAX_DAYS) int days) {
+            @Parameter(description = "Number of days to analyze", example = "30")
+            @RequestParam(defaultValue = "30") @Min(1) @Max(MAX_DAYS) int days) {
         try {
             if (logger.isDebugEnabled()) {
                 logger.debug("Fetching user behavior analysis for {} days", days);

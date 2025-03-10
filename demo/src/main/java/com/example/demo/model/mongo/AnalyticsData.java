@@ -14,7 +14,6 @@ public class AnalyticsData {
     private Map<String, Object> metadata;
     private Instant timestamp;
 
-    // Constructors
     public AnalyticsData() {}
 
     public AnalyticsData(String eventType, String userId, Map<String, Object> metadata) {
@@ -24,7 +23,6 @@ public class AnalyticsData {
         this.timestamp = Instant.now();
     }
 
-    // Getters and Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getEventType() { return eventType; }

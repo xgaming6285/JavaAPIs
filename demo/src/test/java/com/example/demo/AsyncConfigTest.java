@@ -9,10 +9,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.context.annotation.Import;
+import com.example.demo.config.TestConfig;
 
 @SpringBootTest(classes = {ApiApplication.class, AsyncConfig.class})
 @ActiveProfiles("test")
 @TestPropertySource(locations = "classpath:application-test.properties")
+@Import(TestConfig.class)
 class AsyncConfigTest {
 
     @Autowired

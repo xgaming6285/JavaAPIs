@@ -10,7 +10,7 @@ public class UserSession {
     @Id
     private String id;
     private String userId;
-    @Indexed(expireAfterSeconds = 3600) // TTL index - expires after 1 hour
+    @Indexed(expireAfterSeconds = 3600) 
     private Instant lastAccessTime;
     private String sessionToken;
     private String ipAddress;
@@ -18,7 +18,6 @@ public class UserSession {
     private boolean active;
     private Instant createdAt;
 
-    // Constructors
     public UserSession() {}
 
     public UserSession(String userId, String sessionToken, String ipAddress, String userAgent) {
@@ -31,7 +30,6 @@ public class UserSession {
         this.lastAccessTime = Instant.now();
     }
 
-    // Getters and Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getUserId() { return userId; }

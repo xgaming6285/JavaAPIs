@@ -15,7 +15,6 @@ public class UserActivity {
     private String userAgent;
     private Instant timestamp;
 
-    // Constructors
     public UserActivity() {}
 
     public UserActivity(String userId, String action, String details, String ipAddress, String userAgent) {
@@ -27,7 +26,6 @@ public class UserActivity {
         this.timestamp = Instant.now();
     }
 
-    // Getters and Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getUserId() { return userId; }
