@@ -235,6 +235,7 @@ jane_smith,jane.smith@example.com,password456,true,USER
 | Service | URL | Purpose |
 |---------|-----|----------|
 | Grafana | `http://localhost:3000` | Metrics visualization |
+| Frontend Dev Server | `http://localhost:3001` | Development server |
 | Prometheus | `http://localhost:9090` | Metrics collection |
 | Spring Actuator | `http://localhost:8080/actuator` | Application health |
 | MongoDB Compass | `mongodb://localhost:27017` | Database management |
