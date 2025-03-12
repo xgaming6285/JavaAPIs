@@ -10,12 +10,14 @@ import org.testcontainers.utility.DockerImageName;
 public class TestContainersConfig {
     
     @Bean(initMethod = "start", destroyMethod = "stop")
+    @SuppressWarnings("resource")
     public MongoDBContainer mongoDBContainer() {
         return new MongoDBContainer(DockerImageName.parse("mongo:6.0"))
                 .withExposedPorts(27017);
     }
 
     @Bean(initMethod = "start", destroyMethod = "stop")
+    @SuppressWarnings("resource")
     public PostgreSQLContainer<?> postgreSQLContainer() {
         return new PostgreSQLContainer<>(DockerImageName.parse("postgres:15"))
                 .withDatabaseName("testdb")

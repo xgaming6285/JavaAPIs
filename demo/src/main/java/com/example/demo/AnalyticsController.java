@@ -16,12 +16,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.ConsumptionProbe;
 
 /**
  * Controller handling analytics endpoints for user data.
@@ -34,19 +40,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class AnalyticsController {
     private static final Logger logger = LoggerFactory.getLogger(AnalyticsController.class);
     private static final int MAX_DAYS = 365;
+    private static final int DEFAULT_PAGE_SIZE = 20;
 
     private final UserService userService;
     private final UserActivityService userActivityService;
+    private final Bucket rateLimiter;
 
     /**
      * Constructs an AnalyticsController with required services.
      *
      * @param userService Service for user-related operations
      * @param userActivityService Service for user activity tracking
+     * @param rateLimiter Service for rate limiting
      */
-    public AnalyticsController(UserService userService, UserActivityService userActivityService) {
+    public AnalyticsController(UserService userService, UserActivityService userActivityService, Bucket rateLimiter) {
         this.userService = Objects.requireNonNull(userService, "UserService must not be null");
         this.userActivityService = Objects.requireNonNull(userActivityService, "UserActivityService must not be null");
+        this.rateLimiter = Objects.requireNonNull(rateLimiter, "RateLimiter must not be null");
     }
 
     /**
@@ -64,8 +74,14 @@ public class AnalyticsController {
         @ApiResponse(responseCode = "500", description = "Internal server error while fetching statistics")
     })
     @GetMapping("/user-stats")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ANALYST')")
     @Cacheable(value = "userStats", key = "'stats'", condition = "#result != null")
     public ResponseEntity<Map<String, Object>> getUserStats() {
+        ConsumptionProbe probe = rateLimiter.tryConsumeAndReturnRemaining(1);
+        if (!probe.isConsumed()) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+        }
+
         try {
             if (logger.isDebugEnabled()) {
                 logger.debug("Fetching user statistics");
@@ -80,10 +96,19 @@ public class AnalyticsController {
             if (logger.isDebugEnabled()) {
                 logger.debug("Successfully retrieved user statistics");
             }
-            return ResponseEntity.ok(stats);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("X-Content-Type-Options", "nosniff");
+            headers.add("X-Frame-Options", "DENY");
+            headers.add("X-XSS-Protection", "1; mode=block");
+            
+            return ResponseEntity.ok()
+                .headers(headers)
+                .body(stats);
         } catch (Exception e) {
             logger.error("Error fetching user statistics: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "An internal error occurred"));
         }
     }
 
@@ -104,11 +129,23 @@ public class AnalyticsController {
         @ApiResponse(responseCode = "500", description = "Internal server error while fetching trends")
     })
     @GetMapping("/activity-trends")
-    @Cacheable(value = "activityTrends", key = "#days", condition = "#result != null")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ANALYST')")
     public ResponseEntity<Map<String, Object>> getActivityTrends(
             @Parameter(description = "Number of days to analyze", example = "30")
-            @RequestParam(defaultValue = "30") @Min(1) @Max(MAX_DAYS) int days) {
+            @RequestParam(defaultValue = "30") @Min(1) @Max(MAX_DAYS) int days,
+            @PageableDefault(size = DEFAULT_PAGE_SIZE) Pageable pageable) {
+        
+        ConsumptionProbe probe = rateLimiter.tryConsumeAndReturnRemaining(1);
+        if (!probe.isConsumed()) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+        }
+
         try {
+            if (days > MAX_DAYS) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Days parameter exceeds maximum allowed value"));
+            }
+
             if (logger.isDebugEnabled()) {
                 logger.debug("Fetching activity trends for {} days", days);
             }
