@@ -28,6 +28,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * Controller handling analytics endpoints for user data.
@@ -45,6 +46,7 @@ public class AnalyticsController {
     private final UserService userService;
     private final UserActivityService userActivityService;
     private final Bucket rateLimiter;
+    private final HttpHeaders securityHeaders;
 
     /**
      * Constructs an AnalyticsController with required services.
@@ -53,10 +55,18 @@ public class AnalyticsController {
      * @param userActivityService Service for user activity tracking
      * @param rateLimiter Service for rate limiting
      */
-    public AnalyticsController(UserService userService, UserActivityService userActivityService, Bucket rateLimiter) {
+    public AnalyticsController(
+            UserService userService, 
+            UserActivityService userActivityService, 
+            @Qualifier("generalLimiter") Bucket rateLimiter) {
         this.userService = Objects.requireNonNull(userService, "UserService must not be null");
         this.userActivityService = Objects.requireNonNull(userActivityService, "UserActivityService must not be null");
         this.rateLimiter = Objects.requireNonNull(rateLimiter, "RateLimiter must not be null");
+        
+        this.securityHeaders = new HttpHeaders();
+        this.securityHeaders.add("X-Content-Type-Options", "nosniff");
+        this.securityHeaders.add("X-Frame-Options", "DENY");
+        this.securityHeaders.add("X-XSS-Protection", "1; mode=block");
     }
 
     /**
@@ -77,38 +87,25 @@ public class AnalyticsController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('ANALYST')")
     @Cacheable(value = "userStats", key = "'stats'", condition = "#result != null")
     public ResponseEntity<Map<String, Object>> getUserStats() {
-        ConsumptionProbe probe = rateLimiter.tryConsumeAndReturnRemaining(1);
-        if (!probe.isConsumed()) {
+        if (!checkRateLimit()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
         }
 
         try {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Fetching user statistics");
-            }
+            logDebug("Fetching user statistics");
+            
             Map<String, Object> stats = Map.of(
                 "totalUsers", userService.getTotalUsers(),
-                "activeUsers", userService.getActiveUsers().size(),
-                "inactiveUsers", userService.getInactiveUsers().size(),
+                "activeUsers", userService.getActiveUsers(Pageable.unpaged()).getTotalElements(),
+                "inactiveUsers", userService.getInactiveUsers(Pageable.unpaged()).getTotalElements(),
                 "usersByRole", userService.getUserCountByRole(),
                 "averageRolesPerUser", userService.getAverageRolesPerUser()
             );
-            if (logger.isDebugEnabled()) {
-                logger.debug("Successfully retrieved user statistics");
-            }
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("X-Content-Type-Options", "nosniff");
-            headers.add("X-Frame-Options", "DENY");
-            headers.add("X-XSS-Protection", "1; mode=block");
             
-            return ResponseEntity.ok()
-                .headers(headers)
-                .body(stats);
+            logDebug("Successfully retrieved user statistics");
+            return createSuccessResponse(stats);
         } catch (Exception e) {
-            logger.error("Error fetching user statistics: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "An internal error occurred"));
+            return handleException("Error fetching user statistics", e);
         }
     }
 
@@ -135,8 +132,7 @@ public class AnalyticsController {
             @RequestParam(defaultValue = "30") @Min(1) @Max(MAX_DAYS) int days,
             @PageableDefault(size = DEFAULT_PAGE_SIZE) Pageable pageable) {
         
-        ConsumptionProbe probe = rateLimiter.tryConsumeAndReturnRemaining(1);
-        if (!probe.isConsumed()) {
+        if (!checkRateLimit()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
         }
 
@@ -146,15 +142,12 @@ public class AnalyticsController {
                     .body(Map.of("error", "Days parameter exceeds maximum allowed value"));
             }
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Fetching activity trends for {} days", days);
-            }
+            logDebug("Fetching activity trends for {} days", days);
             LocalDateTime startDate = LocalDateTime.now().minus(days, ChronoUnit.DAYS);
             Map<String, Object> trends = userActivityService.getActivityTrendsSince(startDate);
-            return ResponseEntity.ok(trends);
+            return createSuccessResponse(trends);
         } catch (Exception e) {
-            logger.error("Error fetching activity trends: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return handleException("Error fetching activity trends", e);
         }
     }
 
@@ -173,18 +166,15 @@ public class AnalyticsController {
     @Cacheable(value = "roleDistribution", key = "'distribution'", condition = "#result != null")
     public ResponseEntity<Map<String, Object>> getRoleDistribution() {
         try {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Fetching role distribution");
-            }
+            logDebug("Fetching role distribution");
             Map<String, Object> distribution = Map.of(
                 "roleDistribution", userService.getRoleDistribution(),
                 "commonRoleCombinations", userService.getCommonRoleCombinations(),
                 "averageRolesPerUser", userService.getAverageRolesPerUser()
             );
-            return ResponseEntity.ok(distribution);
+            return createSuccessResponse(distribution);
         } catch (Exception e) {
-            logger.error("Error fetching role distribution: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return handleException("Error fetching role distribution", e);
         }
     }
 
@@ -207,15 +197,12 @@ public class AnalyticsController {
             @Parameter(description = "Number of days to analyze", example = "30")
             @RequestParam(defaultValue = "30") @Min(1) @Max(MAX_DAYS) int days) {
         try {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Fetching user growth metrics for {} days", days);
-            }
+            logDebug("Fetching user growth metrics for {} days", days);
             LocalDateTime startDate = LocalDateTime.now().minus(days, ChronoUnit.DAYS);
             Map<String, Object> growth = userActivityService.getUserGrowthMetrics(startDate);
-            return ResponseEntity.ok(growth);
+            return createSuccessResponse(growth);
         } catch (Exception e) {
-            logger.error("Error fetching user growth metrics: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return handleException("Error fetching user growth metrics", e);
         }
     }
 
@@ -234,14 +221,11 @@ public class AnalyticsController {
     @Cacheable(value = "securityMetrics", key = "'metrics'", condition = "#result != null")
     public ResponseEntity<Map<String, Object>> getSecurityMetrics() {
         try {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Fetching security metrics");
-            }
+            logDebug("Fetching security metrics");
             Map<String, Object> metrics = userActivityService.getSecurityMetrics();
-            return ResponseEntity.ok(metrics);
+            return createSuccessResponse(metrics);
         } catch (Exception e) {
-            logger.error("Error fetching security metrics: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return handleException("Error fetching security metrics", e);
         }
     }
 
@@ -264,15 +248,12 @@ public class AnalyticsController {
             @Parameter(description = "Number of days to analyze", example = "30")
             @RequestParam(defaultValue = "30") @Min(1) @Max(MAX_DAYS) int days) {
         try {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Fetching user retention metrics for {} days", days);
-            }
+            logDebug("Fetching user retention metrics for {} days", days);
             LocalDateTime startDate = LocalDateTime.now().minus(days, ChronoUnit.DAYS);
             Map<String, Object> retention = userActivityService.getUserRetentionMetrics(startDate);
-            return ResponseEntity.ok(retention);
+            return createSuccessResponse(retention);
         } catch (Exception e) {
-            logger.error("Error fetching user retention metrics: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return handleException("Error fetching user retention metrics", e);
         }
     }
 
@@ -295,15 +276,59 @@ public class AnalyticsController {
             @Parameter(description = "Number of days to analyze", example = "30")
             @RequestParam(defaultValue = "30") @Min(1) @Max(MAX_DAYS) int days) {
         try {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Fetching user behavior analysis for {} days", days);
-            }
+            logDebug("Fetching user behavior analysis for {} days", days);
             LocalDateTime startDate = LocalDateTime.now().minus(days, ChronoUnit.DAYS);
             Map<String, Object> behavior = userActivityService.getUserBehaviorAnalysis(startDate);
-            return ResponseEntity.ok(behavior);
+            return createSuccessResponse(behavior);
         } catch (Exception e) {
-            logger.error("Error fetching user behavior analysis: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return handleException("Error fetching user behavior analysis", e);
+        }
+    }
+    
+    /**
+     * Checks if the request is within rate limits.
+     *
+     * @return true if within limits, false otherwise
+     */
+    private boolean checkRateLimit() {
+        ConsumptionProbe probe = rateLimiter.tryConsumeAndReturnRemaining(1);
+        return probe.isConsumed();
+    }
+    
+    /**
+     * Creates a success response with security headers.
+     *
+     * @param body the response body
+     * @return ResponseEntity with body and headers
+     */
+    private ResponseEntity<Map<String, Object>> createSuccessResponse(Map<String, Object> body) {
+        return ResponseEntity.ok()
+            .headers(securityHeaders)
+            .body(body);
+    }
+    
+    /**
+     * Handles exceptions in a consistent way.
+     *
+     * @param message error message
+     * @param e the exception
+     * @return ResponseEntity with error details
+     */
+    private ResponseEntity<Map<String, Object>> handleException(String message, Exception e) {
+        logger.error("{}: {}", message, e.getMessage(), e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(Map.of("error", "An internal error occurred"));
+    }
+    
+    /**
+     * Logs debug messages if debug is enabled.
+     *
+     * @param format message format
+     * @param args message arguments
+     */
+    private void logDebug(String format, Object... args) {
+        if (logger.isDebugEnabled()) {
+            logger.debug(format, args);
         }
     }
 } 

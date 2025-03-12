@@ -6,10 +6,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Pageable;
 
-/**
- * Service for tracking and analyzing user activity metrics.
- */
 @Service
 public class UserActivityService {
     private static final int LOCKOUT_THRESHOLD = 5;
@@ -87,7 +85,7 @@ public class UserActivityService {
         lastLoginTimes.put(userId, LocalDateTime.now());
     }
 
-    @Scheduled(cron = "0 0 0 * * *") // Run daily at midnight
+    @Scheduled(cron = "0 0 0 * * *")
     public void cleanupOldData() {
         LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
         userActivities.entrySet().removeIf(entry -> 
@@ -126,7 +124,7 @@ public class UserActivityService {
     }
 
     private double calculateRetentionRate(LocalDateTime startDate) {
-        long totalUsers = userService.getAllUsers().size();
+        long totalUsers = userService.getAllUsers(Pageable.unpaged()).getTotalElements();
         long activeUsers = lastLoginTimes.values().stream()
             .filter(time -> time.isAfter(startDate))
             .count();
@@ -157,7 +155,7 @@ public class UserActivityService {
         
         while (currentDate.isAfter(startDate)) {
             LocalDateTime date = currentDate;
-            long totalUsers = userService.getAllUsers().size();
+            long totalUsers = userService.getAllUsers(Pageable.unpaged()).getTotalElements();
             long retainedUsers = lastLoginTimes.values().stream()
                 .filter(loginTime -> loginTime.isAfter(date))
                 .count();
@@ -175,7 +173,7 @@ public class UserActivityService {
         
         while (currentDate.isAfter(startDate)) {
             LocalDateTime weekStart = currentDate;
-            long totalUsers = userService.getAllUsers().size();
+            long totalUsers = userService.getAllUsers(Pageable.unpaged()).getTotalElements();
             long retainedUsers = lastLoginTimes.values().stream()
                 .filter(loginTime -> loginTime.isAfter(weekStart))
                 .count();
@@ -193,7 +191,7 @@ public class UserActivityService {
         
         while (currentDate.isAfter(startDate)) {
             LocalDateTime monthStart = currentDate;
-            long totalUsers = userService.getAllUsers().size();
+            long totalUsers = userService.getAllUsers(Pageable.unpaged()).getTotalElements();
             long retainedUsers = lastLoginTimes.values().stream()
                 .filter(loginTime -> loginTime.isAfter(monthStart))
                 .count();

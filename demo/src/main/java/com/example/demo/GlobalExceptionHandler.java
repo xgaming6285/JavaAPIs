@@ -16,10 +16,6 @@ import org.springframework.web.context.request.WebRequest;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
-/**
- * Global exception handler for centralizing exception handling across the application.
- * Provides consistent error responses for different types of exceptions.
- */
 @ControllerAdvice
 public class GlobalExceptionHandler {
     

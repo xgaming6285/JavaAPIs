@@ -10,9 +10,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
-/**
- * Configuration class for OpenAPI documentation.
- */
 @Configuration
 public class OpenAPIConfig {
 

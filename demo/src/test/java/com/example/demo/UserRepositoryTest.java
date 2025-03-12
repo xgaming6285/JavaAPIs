@@ -4,11 +4,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -109,11 +110,11 @@ class UserRepositoryTest {
         entityManager.flush();
 
         // when
-        List<User> found = userRepository.findByUsernameContainingIgnoreCase("testuser");
+        Page<User> found = userRepository.findByUsernameContainingIgnoreCase("testuser", Pageable.unpaged());
 
         // then
-        assertThat(found).hasSize(2);
-        assertThat(found).extracting(User::getUsername)
+        assertThat(found.getTotalElements()).isEqualTo(2);
+        assertThat(found.getContent()).extracting(User::getUsername)
                 .containsExactlyInAnyOrder("testuser1", "testuser2");
     }
 
@@ -139,11 +140,11 @@ class UserRepositoryTest {
         entityManager.flush();
 
         // when
-        List<User> found = userRepository.findByEmailDomain("example.com");
+        Page<User> found = userRepository.findByEmailDomain("example.com", Pageable.unpaged());
 
         // then
-        assertThat(found).hasSize(1);
-        assertThat(found.get(0).getEmail()).isEqualTo("test1@example.com");
+        assertThat(found.getTotalElements()).isEqualTo(1);
+        assertThat(found.getContent().get(0).getEmail()).isEqualTo("test1@example.com");
     }
 
     @Test
@@ -168,16 +169,17 @@ class UserRepositoryTest {
         entityManager.flush();
 
         // when
-        List<User> found = userRepository.findByMultipleCriteria(
+        Page<User> found = userRepository.findByMultipleCriteria(
                 "admin",
                 "example.com",
                 true,
-                "ADMIN"
+                "ADMIN",
+                Pageable.unpaged()
         );
 
         // then
-        assertThat(found).hasSize(1);
-        assertThat(found.get(0).getUsername()).isEqualTo("admin");
-        assertThat(found.get(0).getRoles()).contains("ADMIN");
+        assertThat(found.getTotalElements()).isEqualTo(1);
+        assertThat(found.getContent().get(0).getUsername()).isEqualTo("admin");
+        assertThat(found.getContent().get(0).getRoles()).contains("ADMIN");
     }
 } 

@@ -3,11 +3,6 @@ package com.example.demo;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-/**
- * Request object for password update operations.
- *
- * <p>This class handles password update requests containing both old and new password values.
- */
 public final class PasswordUpdate {
   @NotBlank(message = "Old password is required")
   private String oldPassword;

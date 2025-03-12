@@ -52,7 +52,6 @@ class AuthControllerTest {
         validLoginRequest.setUsername("testuser");
         validLoginRequest.setPassword("password123");
 
-        // Create mock user without using setId
         mockUser = new User("testuser", "test@example.com", "hashedPassword");
     }
 
@@ -71,7 +70,6 @@ class AuthControllerTest {
     @Test
     void register_WithInvalidRequest_ShouldReturnBadRequest() throws Exception {
         CreateUserRequest invalidRequest = new CreateUserRequest();
-        // Empty request
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)

@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Objects;
 
 public class UpdateRolesDTO {
-    /** Set of roles for the user. Cannot be empty. */
     @NotEmpty(message = "Roles cannot be empty")
     private Set<String> roles;
 

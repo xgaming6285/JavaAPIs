@@ -55,10 +55,8 @@ class UpdateRolesDTOTest {
         
         UpdateRolesDTO dto = new UpdateRolesDTO(roles);
         
-        // Try to modify the original set
         roles.add("USER");
         
-        // DTO's roles should remain unchanged
         assertEquals(1, dto.getRoles().size());
         assertTrue(dto.getRoles().contains("ADMIN"));
         assertFalse(dto.getRoles().contains("USER"));
@@ -73,7 +71,6 @@ class UpdateRolesDTOTest {
         
         Set<String> returnedRoles = dto.getRoles();
         
-        // Try to modify the returned set
         assertThrows(UnsupportedOperationException.class, () -> {
             returnedRoles.add("USER");
         });

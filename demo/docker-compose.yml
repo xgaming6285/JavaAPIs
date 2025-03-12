@@ -1,24 +1,33 @@
 version: '3.8'
 services:
   app:
-    build:
-      context: .
-      target: development
+    build: .
+    container_name: spring_app
     ports:
       - "8080:8080"
-      - "5005:5005"
     volumes:
       - ./src:/app/src
       - ./pom.xml:/app/pom.xml
       - ./.mvn:/app/.mvn
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=docker
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=redispass
     depends_on:
-      - db
-      - mongodb
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      db:
+        condition: service_started
+    networks:
+      - app_network
+    restart: unless-stopped
 
   db:
     image: postgres:15-alpine
+    container_name: postgres_db
     environment:
       - POSTGRES_DB=demo
       - POSTGRES_USER=postgres
@@ -27,16 +36,55 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   mongodb:
     image: mongo:6.0
+    container_name: mongodb
     ports:
       - "27017:27017"
     environment:
       - MONGO_INITDB_DATABASE=analytics_db
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - app_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis_cache
+    ports:
+      - "6379:6379"
+    command: redis-server --save 20 1 --loglevel warning --requirepass redispass
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redispass", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  app_network:
+    driver: bridge
 
 volumes:
   postgres_data:
   mongodb_data:
+  redis_data:
+    driver: local

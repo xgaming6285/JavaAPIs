@@ -8,7 +8,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,17 +23,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Controller handling authentication-related endpoints including user registration,
- * login, email verification, and password management.
- */
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Authentication management APIs")
 @Validated
 public class AuthController {
-    
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private static final String TOKEN_PARAM = "token";
+    private static final String EMAIL_VERIFIED_MSG = "Email verified successfully";
+    private static final String INVALID_TOKEN_MSG = "Invalid token";
+    private static final String PASSWORD_UPDATED_MSG = "Password updated successfully";
+    private static final String INVALID_PASSWORD_MSG = "Old password is incorrect";
+    
     private final UserService userService;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
@@ -62,24 +66,43 @@ public class AuthController {
     @PostMapping("/register")
     @RateLimiter(name = "registration")
     public ResponseEntity<UserDTO> register(@Valid @RequestBody CreateUserRequest createUserRequest) {
+        logger.debug("Processing registration request for username: {}", createUserRequest.getUsername());
+        
         if (isInvalidUser(createUserRequest)) {
+            logger.warn("Invalid registration request: missing required fields");
             return ResponseEntity.badRequest().build();
         }
         
-        User user = new User(
-            createUserRequest.getUsername(),
-            createUserRequest.getEmail(),
-            passwordEncoder.encode(createUserRequest.getPassword())
-        );
+        if (userService.getUserByUsername(createUserRequest.getUsername()).isPresent()) {
+            logger.warn("Registration failed: username already exists: {}", createUserRequest.getUsername());
+            return ResponseEntity.badRequest().build();
+        }
         
-        User newUser = userService.createUser(user);
-        String token = UUID.randomUUID().toString();
+        if (userService.getUserByEmail(createUserRequest.getEmail()).isPresent()) {
+            logger.warn("Registration failed: email already exists: {}", createUserRequest.getEmail());
+            return ResponseEntity.badRequest().build();
+        }
         
-        userService.saveVerificationToken(newUser.getId(), token);
-        emailService.sendVerificationEmail(newUser.getEmail(), token);
-        
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(new UserDTO(newUser.getId(), newUser.getUsername(), newUser.getEmail()));
+        try {
+            User user = new User(
+                createUserRequest.getUsername(),
+                createUserRequest.getEmail(),
+                passwordEncoder.encode(createUserRequest.getPassword())
+            );
+            
+            User newUser = userService.createUser(user);
+            String token = UUID.randomUUID().toString();
+            
+            userService.saveVerificationToken(newUser.getId(), token);
+            emailService.sendVerificationEmail(newUser.getEmail(), token);
+            
+            logger.info("User registered successfully: {}", newUser.getUsername());
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new UserDTO(newUser.getId(), newUser.getUsername(), newUser.getEmail()));
+        } catch (Exception e) {
+            logger.error("Error during user registration: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -92,14 +115,25 @@ public class AuthController {
     @PostMapping("/login")
     @RateLimiter(name = "login")
     public ResponseEntity<String> login(@Valid @RequestBody LoginRequest loginRequest) {
-        boolean isValidUser = userService.verifyUserCredentials(
-            loginRequest.getUsername(),
-            loginRequest.getPassword()
-        );
+        logger.debug("Processing login request for username: {}", loginRequest.getUsername());
         
-        return isValidUser 
-            ? ResponseEntity.ok("Login successful")
-            : ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        try {
+            boolean isValidUser = userService.verifyUserCredentials(
+                loginRequest.getUsername(),
+                loginRequest.getPassword()
+            );
+            
+            if (isValidUser) {
+                logger.info("User logged in successfully: {}", loginRequest.getUsername());
+                return ResponseEntity.ok("Login successful");
+            } else {
+                logger.warn("Failed login attempt for username: {}", loginRequest.getUsername());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+        } catch (Exception e) {
+            logger.error("Error during login: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -111,13 +145,25 @@ public class AuthController {
     @Operation(summary = "Verify email")
     @GetMapping("/verify") 
     public ResponseEntity<String> verifyEmail(@RequestParam(TOKEN_PARAM) @NotBlank String token) {
-        return userService.getUserByToken(token)
-            .map(user -> {
+        logger.debug("Processing email verification with token: {}", token);
+        
+        try {
+            Optional<User> userOpt = userService.getUserByToken(token);
+            
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
                 user.setActive(true);
                 userService.updateUser(user.getId(), user);
-                return ResponseEntity.ok("Email verified successfully");
-            })
-            .orElseGet(() -> ResponseEntity.badRequest().body("Invalid token"));
+                logger.info("Email verified successfully for user: {}", user.getUsername());
+                return ResponseEntity.ok(EMAIL_VERIFIED_MSG);
+            } else {
+                logger.warn("Email verification failed: invalid token");
+                return ResponseEntity.badRequest().body(INVALID_TOKEN_MSG);
+            }
+        } catch (Exception e) {
+            logger.error("Error during email verification: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -131,14 +177,30 @@ public class AuthController {
     @RateLimiter(name = "passwordReset")
     public ResponseEntity<String> resetPassword(
         @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
-        return userService.getUserByEmail(resetPasswordRequest.getEmail())
-            .map(user -> {
+        logger.debug("Processing password reset request for email: {}", resetPasswordRequest.getEmail());
+        
+        try {
+            Optional<User> userOpt = userService.getUserByEmail(resetPasswordRequest.getEmail());
+            
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
                 String token = UUID.randomUUID().toString();
                 userService.saveResetToken(user.getId(), token);
                 emailService.sendResetPasswordEmail(user.getEmail(), token);
+                logger.info("Password reset link sent to: {}", user.getEmail());
                 return ResponseEntity.ok("Password reset link sent to your email");
-            })
-            .orElseGet(() -> ResponseEntity.badRequest().body("Email not found"));
+            } else {
+                logger.warn("Password reset failed: email not found: {}", resetPasswordRequest.getEmail());
+                return ResponseEntity.badRequest().body("Email not found");
+            }
+        } catch (EmailServiceException e) {
+            logger.error("Email service error during password reset: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Unable to send password reset email at this time");
+        } catch (Exception e) {
+            logger.error("Error during password reset: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -153,17 +215,32 @@ public class AuthController {
     public ResponseEntity<String> updatePassword(
         @RequestParam(TOKEN_PARAM) @NotBlank String token,
         @Valid @RequestBody PasswordUpdate passwordUpdate) {
-        return userService.getUserByToken(token)
-            .map(user -> {
+        logger.debug("Processing password update with token");
+        
+        try {
+            Optional<User> userOpt = userService.getUserByToken(token);
+            
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                
                 if (!passwordEncoder.matches(passwordUpdate.getOldPassword(), user.getPassword())) {
-                    return ResponseEntity.badRequest().body("Old password is incorrect");
+                    logger.warn("Password update failed: incorrect old password for user: {}", user.getUsername());
+                    return ResponseEntity.badRequest().body(INVALID_PASSWORD_MSG);
                 }
                 
                 user.setPassword(passwordEncoder.encode(passwordUpdate.getNewPassword()));
+                user.setToken(null); // Invalidate the token after use
                 userService.updateUser(user.getId(), user);
-                return ResponseEntity.ok("Password updated successfully");
-            })
-            .orElseGet(() -> ResponseEntity.badRequest().body("Invalid token"));
+                logger.info("Password updated successfully for user: {}", user.getUsername());
+                return ResponseEntity.ok(PASSWORD_UPDATED_MSG);
+            } else {
+                logger.warn("Password update failed: invalid token");
+                return ResponseEntity.badRequest().body(INVALID_TOKEN_MSG);
+            }
+        } catch (Exception e) {
+            logger.error("Error during password update: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     private boolean isInvalidUser(CreateUserRequest createUserRequest) {

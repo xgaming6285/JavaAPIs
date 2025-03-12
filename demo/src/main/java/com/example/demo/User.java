@@ -18,14 +18,13 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * Entity representing a user in the system.
- * This class handles user data including authentication and authorization information.
- */
 @Entity
 @Table(name = "users", indexes = {
     @Index(name = "idx_username", columnList = "username"),
-    @Index(name = "idx_email", columnList = "email")
+    @Index(name = "idx_email", columnList = "email"),
+    @Index(name = "idx_username_email", columnList = "username,email"),
+    @Index(name = "idx_username_active", columnList = "username,active"),
+    @Index(name = "idx_email_active", columnList = "email,active")
 })
 public final class User {
     @Id 
@@ -60,9 +59,6 @@ public final class User {
     @Column(name = "role")
     private Set<String> roles = new HashSet<>();
 
-    /**
-     * Protected constructor for JPA.
-     */
     protected User() {
         this.id = null;
     }
@@ -239,13 +235,9 @@ public final class User {
             return false;
         }
         User user = (User) o;
-        
-        // If both IDs are not null, compare only IDs
         if (id != null && user.id != null) {
             return Objects.equals(id, user.id);
         }
-        
-        // If both IDs are null, compare all fields
         if (id == null && user.id == null) {
             return Objects.equals(username, user.username)
                     && Objects.equals(email, user.email)
@@ -254,17 +246,14 @@ public final class User {
                     && active == user.active
                     && Objects.equals(roles, user.roles);
         }
-        
         return false;
     }
 
     @Override
     public int hashCode() {
-        // If ID is not null, use only ID for hash code
         if (id != null) {
             return Objects.hash(id);
         }
-        // If ID is null, use all fields
         return Objects.hash(username, email, password, token, active, roles);
     }
 
@@ -283,9 +272,6 @@ public final class User {
         return new UserBuilder();
     }
 
-    /**
-     * Builder class for creating User instances.
-     */
     public static final class UserBuilder {
         private String username;
         private String email;
@@ -372,5 +358,29 @@ public final class User {
             user.setRoles(new HashSet<>(roles));
             return user;
         }
+    }
+
+    /**
+     * Converts this User to a UserDTO.
+     *
+     * @return A UserDTO representing this user's public information
+     */
+    public UserDTO toDTO() {
+        return new UserDTO(this.id, this.username, this.email);
+    }
+
+    /**
+     * Creates a User instance from a UserDTO.
+     * Note: This will only set the id, username, and email fields.
+     *
+     * @param dto The UserDTO to convert
+     * @return A new User instance
+     */
+    public static User fromDTO(UserDTO dto) {
+        User user = new User();
+        user.setId(dto.getId());
+        user.setUsername(dto.getUsername());
+        user.setEmail(dto.getEmail());
+        return user;
     }
 }

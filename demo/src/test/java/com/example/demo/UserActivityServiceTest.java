@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -100,7 +104,8 @@ class UserActivityServiceTest {
 
     @Test
     void testGetUserRetentionMetrics() {
-        when(userService.getAllUsers()).thenReturn(new ArrayList<>());
+        Page<User> emptyPage = new PageImpl<>(new ArrayList<>());
+        when(userService.getAllUsers(any(Pageable.class))).thenReturn(emptyPage);
         
         Map<String, Object> metrics = userActivityService.getUserRetentionMetrics(startDate);
         
@@ -124,7 +129,8 @@ class UserActivityServiceTest {
     void testCalculateRetentionRate() {
         List<User> users = new ArrayList<>();
         users.add(new User("user1", "user1@example.com", "pass1"));
-        when(userService.getAllUsers()).thenReturn(users);
+        Page<User> userPage = new PageImpl<>(users);
+        when(userService.getAllUsers(any(Pageable.class))).thenReturn(userPage);
         
         Map<String, Object> metrics = userActivityService.getUserGrowthMetrics(startDate);
         double retentionRate = (double) metrics.get("userRetentionRate");
@@ -136,7 +142,8 @@ class UserActivityServiceTest {
     void testCalculateChurnRate() {
         List<User> users = new ArrayList<>();
         users.add(new User("user1", "user1@example.com", "pass1"));
-        when(userService.getAllUsers()).thenReturn(users);
+        Page<User> userPage = new PageImpl<>(users);
+        when(userService.getAllUsers(any(Pageable.class))).thenReturn(userPage);
         
         Map<String, Object> metrics = userActivityService.getUserGrowthMetrics(startDate);
         double churnRate = (double) metrics.get("churnRate");

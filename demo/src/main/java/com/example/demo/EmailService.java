@@ -10,10 +10,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-/**
- * Service for handling email-related operations.
- * Provides functionality for sending verification and password reset emails.
- */
 @Service
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
@@ -41,7 +37,6 @@ public class EmailService {
     }
 
     private void sendEmail(String to, String subject, String message) {
-        // Skip sending email if configuration is missing
         if (fromEmail == null || fromEmail.isEmpty()) {
             logger.warn("Email service not configured. Skipping email send.");
             return;

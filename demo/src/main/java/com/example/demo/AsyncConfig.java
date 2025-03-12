@@ -6,16 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-/**
- * Configuration class for asynchronous execution settings.
- * Provides custom thread pool configuration for handling asynchronous operations.
- * 
- * The configuration creates a thread pool with:
- * - Core pool size: 3 threads
- * - Max pool size: 3 threads
- * - Queue capacity: 100 tasks
- * - Thread name prefix: "AsyncThread-"
- */
 @Configuration
 @EnableAsync
 public class AsyncConfig {
@@ -29,8 +19,8 @@ public class AsyncConfig {
   @Bean(name = "asyncExecutor")
   public Executor asyncExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(3);
-    executor.setMaxPoolSize(3);
+    executor.setCorePoolSize(4);
+    executor.setMaxPoolSize(8);
     executor.setQueueCapacity(100);
     executor.setThreadNamePrefix("AsyncThread-");
     executor.setThreadGroup(new ThreadGroup("AsyncGroup"));

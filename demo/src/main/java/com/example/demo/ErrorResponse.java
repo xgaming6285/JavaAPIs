@@ -3,10 +3,6 @@ package com.example.demo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
-/**
- * Standard error response object for API errors.
- * Provides a consistent structure for error responses across the application.
- */
 @Schema(description = "Standard error response")
 public class ErrorResponse {
 
@@ -20,7 +16,6 @@ public class ErrorResponse {
     private LocalDateTime timestamp;
 
     public ErrorResponse() {
-        // Default constructor for serialization
     }
 
     public ErrorResponse(String message, int status) {

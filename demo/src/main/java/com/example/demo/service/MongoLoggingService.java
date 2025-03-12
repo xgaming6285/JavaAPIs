@@ -2,7 +2,6 @@ package com.example.demo.service;
 
 import com.example.demo.model.mongo.*;
 import com.example.demo.repository.mongo.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
@@ -11,19 +10,21 @@ import java.util.Optional;
 
 @Service
 public class MongoLoggingService {
-    @Autowired
-    private UserActivityRepository userActivityRepository;
-    
-    @Autowired
-    private AnalyticsDataRepository analyticsDataRepository;
-    
-    @Autowired
-    private UserSessionRepository userSessionRepository;
-    
-    @Autowired
-    private AuditLogRepository auditLogRepository;
+    private final UserActivityRepository userActivityRepository;
+    private final AnalyticsDataRepository analyticsDataRepository;
+    private final UserSessionRepository userSessionRepository;
+    private final AuditLogRepository auditLogRepository;
 
-    // User Activity Logging
+    public MongoLoggingService(UserActivityRepository userActivityRepository,
+                              AnalyticsDataRepository analyticsDataRepository,
+                              UserSessionRepository userSessionRepository,
+                              AuditLogRepository auditLogRepository) {
+        this.userActivityRepository = userActivityRepository;
+        this.analyticsDataRepository = analyticsDataRepository;
+        this.userSessionRepository = userSessionRepository;
+        this.auditLogRepository = auditLogRepository;
+    }
+
     public UserActivity logUserActivity(String userId, String action, String details, String ipAddress, String userAgent) {
         UserActivity activity = new UserActivity(userId, action, details, ipAddress, userAgent);
         return userActivityRepository.save(activity);
@@ -33,7 +34,6 @@ public class MongoLoggingService {
         return userActivityRepository.findByUserIdOrderByTimestampDesc(userId);
     }
 
-    // Analytics Data
     public AnalyticsData logAnalyticsEvent(String eventType, String userId, Map<String, Object> metadata) {
         AnalyticsData analyticsData = new AnalyticsData(eventType, userId, metadata);
         return analyticsDataRepository.save(analyticsData);
@@ -43,7 +43,6 @@ public class MongoLoggingService {
         return analyticsDataRepository.findByEventType(eventType);
     }
 
-    // Session Management
     public UserSession createSession(String userId, String sessionToken, String ipAddress, String userAgent) {
         UserSession session = new UserSession(userId, sessionToken, ipAddress, userAgent);
         return userSessionRepository.save(session);
@@ -69,7 +68,6 @@ public class MongoLoggingService {
             });
     }
 
-    // Audit Logging
     public AuditLog createAuditLog(String userId, String action, String resourceType, String resourceId,
                                  Map<String, Object> changes, String ipAddress, String status, String details) {
         AuditLog auditLog = new AuditLog(userId, action, resourceType, resourceId, changes, ipAddress, status, details);
@@ -84,7 +82,6 @@ public class MongoLoggingService {
         return auditLogRepository.findByResourceTypeAndResourceId(resourceType, resourceId);
     }
 
-    // Time-based queries
     public List<UserActivity> getActivitiesBetween(Instant start, Instant end) {
         return userActivityRepository.findByTimestampBetween(start, end);
     }

@@ -48,7 +48,6 @@ class UserTest {
     void testRolesManagement() {
         User user = new User();
         
-        // Test adding roles
         user.addRole("ADMIN");
         user.addRole("USER");
         
@@ -57,13 +56,11 @@ class UserTest {
         assertTrue(roles.contains("ADMIN"));
         assertTrue(roles.contains("USER"));
         
-        // Test removing role
         user.removeRole("USER");
         roles = user.getRoles();
         assertEquals(1, roles.size());
         assertTrue(roles.contains("ADMIN"));
         
-        // Test setting roles
         Set<String> newRoles = new HashSet<>();
         newRoles.add("MANAGER");
         user.setRoles(newRoles);
@@ -80,13 +77,11 @@ class UserTest {
         var violations = validator.validate(user);
         assertFalse(violations.isEmpty());
         
-        // Test username validation
         user.setUsername("");
         violations = validator.validate(user);
         assertTrue(violations.stream()
             .anyMatch(v -> v.getPropertyPath().toString().equals("username")));
         
-        // Test email validation
         user.setEmail("invalid-email");
         violations = validator.validate(user);
         assertTrue(violations.stream()
@@ -99,14 +94,11 @@ class UserTest {
         User user2 = new User("user1", "user1@example.com", "pass1");
         User user3 = new User("user2", "user2@example.com", "pass2");
         
-        // Test reflexivity
         assertEquals(user1, user1);
         
-        // Test null ID case - users should be equal if they have same data and both IDs are null
         assertEquals(user1, user2);
         assertNotEquals(user1, user3);
         
-        // Test hashCode
         assertEquals(user1.hashCode(), user2.hashCode());
         assertNotEquals(user1.hashCode(), user3.hashCode());
     }
@@ -123,9 +115,9 @@ class UserTest {
         
         assertTrue(toString.contains("testUser"));
         assertTrue(toString.contains("test@example.com"));
-        assertTrue(toString.contains("true")); // active status
-        assertTrue(toString.contains("USER")); // role
-        assertFalse(toString.contains("pass")); // password should not be in toString
+        assertTrue(toString.contains("true"));
+        assertTrue(toString.contains("USER"));
+        assertFalse(toString.contains("pass"));
     }
 
     @Test

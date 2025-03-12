@@ -13,10 +13,6 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import java.util.Map;
 
-/**
- * REST controller for handling logging-related operations.
- * Provides endpoints for user activity, analytics, sessions, and audit logging.
- */
 @RestController
 @RequestMapping("/api/logs")
 @Validated

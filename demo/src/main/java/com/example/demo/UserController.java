@@ -1,7 +1,5 @@
 package com.example.demo;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -21,15 +19,13 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Objects;
 
-/**
- * REST controller for managing user operations.
- */
 @RestController
 @RequestMapping("/api/v1/users")
 @Tag(name = "User Management")
 @Validated
 public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    private static final String USER_NOT_FOUND_MSG = "User not found with id: %d";
     
     private final Counter userCreationCounter;
     private final UserService userService;
@@ -49,156 +45,404 @@ public class UserController {
             .register(registry);
     }
 
+    /**
+     * Converts a User entity to a UserDTO.
+     *
+     * @param user the user entity to convert
+     * @return the user DTO
+     */
     private UserDTO convertToDTO(User user) {
         return new UserDTO(user.getId(), user.getUsername(), user.getEmail());
     }
 
+    /**
+     * Gets all users with pagination.
+     *
+     * @param pageable pagination information
+     * @return page of all users
+     */
     @Timed(value = "api.getAllUsers.time")
-    @Operation(summary = "Get all users")
+    @Operation(summary = "Get all users with pagination")
     @GetMapping("")
-    public List<UserDTO> getAllUsers() {
-        return userService.getAllUsers().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Operation(summary = "Get user by ID")
-    @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable @Min(1) Long id) {
-        return userService.getUserById(id)
-                .map(user -> ResponseEntity.ok(convertToDTO(user)))
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
-    }
-
-    @PostMapping("")
-    @RateLimiter(name = "createUser")
-    @Operation(summary = "Create a new user")
-    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody CreateUserDTO createUserDTO) {
-        if (logger.isInfoEnabled()) {
-            logger.info("Creating new user with username: {}", createUserDTO.getUsername());
-        }
+    public ResponseEntity<Page<UserDTO>> getAllUsers(Pageable pageable) {
         try {
-            User user = new User(createUserDTO.getUsername(), 
-                               createUserDTO.getEmail(), 
-                               createUserDTO.getPassword());
-            User created = userService.createUser(user);
-            userCreationCounter.increment();
-            return ResponseEntity.status(HttpStatus.CREATED)
-                               .body(convertToDTO(created));
+            logger.debug("Fetching all users - page: {}, size: {}", 
+                pageable.getPageNumber(), pageable.getPageSize());
+            Page<UserDTO> users = userService.getAllUsers(pageable)
+                    .map(this::convertToDTO);
+            return ResponseEntity.ok(users);
         } catch (Exception e) {
-            if (logger.isErrorEnabled()) {
-                logger.error("Error creating user: {}", e.getMessage(), e);
-            }
+            logger.error("Error fetching all users: {}", e.getMessage(), e);
             throw e;
         }
     }
 
+    /**
+     * Gets a user by ID.
+     *
+     * @param id the user ID
+     * @return the user with the given ID
+     * @throws UserNotFoundException if no user is found with the given ID
+     */
+    @Operation(summary = "Get user by ID")
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDTO> getUserById(@PathVariable @Min(1) Long id) {
+        logger.debug("Fetching user with ID: {}", id);
+        return userService.getUserById(id)
+                .map(user -> ResponseEntity.ok(convertToDTO(user)))
+                .orElseThrow(() -> {
+                    logger.warn("User not found with ID: {}", id);
+                    return new UserNotFoundException(String.format(USER_NOT_FOUND_MSG, id));
+                });
+    }
+
+    /**
+     * Creates a new user.
+     *
+     * @param createUserRequest the user creation request
+     * @return the created user
+     */
+    @PostMapping("")
+    @RateLimiter(name = "createUser")
+    @Operation(summary = "Create a new user")
+    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody CreateUserRequest createUserRequest) {
+        if (logger.isInfoEnabled()) {
+            logger.info("Creating new user with username: {}", createUserRequest.getUsername());
+        }
+        try {
+            User user = new User(createUserRequest.getUsername(), 
+                               createUserRequest.getEmail(), 
+                               createUserRequest.getPassword());
+            User created = userService.createUser(user);
+            userCreationCounter.increment();
+            logger.info("User created successfully with ID: {}", created.getId());
+            return ResponseEntity.status(HttpStatus.CREATED)
+                               .body(convertToDTO(created));
+        } catch (Exception e) {
+            logger.error("Error creating user: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Updates an existing user.
+     *
+     * @param id the user ID
+     * @param userDetails the updated user details
+     * @return the updated user
+     */
     @PutMapping("/{id}")
     @Operation(summary = "Update user")
     public ResponseEntity<UserDTO> updateUser(@PathVariable @Min(1) Long id,
                                             @Valid @RequestBody User userDetails) {
-        User updatedUser = userService.updateUser(id, userDetails);
-        return ResponseEntity.ok(convertToDTO(updatedUser));
+        try {
+            logger.debug("Updating user with ID: {}", id);
+            User updatedUser = userService.updateUser(id, userDetails);
+            logger.info("User updated successfully with ID: {}", id);
+            return ResponseEntity.ok(convertToDTO(updatedUser));
+        } catch (UserNotFoundException e) {
+            logger.warn("Failed to update user: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error updating user with ID {}: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
+    /**
+     * Deletes a user.
+     *
+     * @param id the user ID
+     * @return no content response
+     */
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete user")
     public ResponseEntity<Void> deleteUser(@PathVariable @Min(1) Long id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+        try {
+            logger.debug("Deleting user with ID: {}", id);
+            // Check if user exists before deletion
+            if (userService.getUserById(id).isEmpty()) {
+                logger.warn("Cannot delete user: User not found with ID: {}", id);
+                throw new UserNotFoundException(String.format(USER_NOT_FOUND_MSG, id));
+            }
+            userService.deleteUser(id);
+            logger.info("User deleted successfully with ID: {}", id);
+            return ResponseEntity.noContent().build();
+        } catch (UserNotFoundException e) {
+            logger.warn("Failed to delete user: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error deleting user with ID {}: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
+    /**
+     * Searches for users by username with pagination.
+     *
+     * @param username the username to search for
+     * @param pageable pagination information
+     * @return page of matching users
+     */
     @GetMapping("/search")
-    @Operation(summary = "Search users")
-    public List<UserDTO> searchUsers(@RequestParam("username") @NotBlank String username) {
-        return userService.searchUsersByUsername(username).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    @Operation(summary = "Search users by username with pagination")
+    public ResponseEntity<Page<UserDTO>> searchUsers(
+            @RequestParam @NotBlank String username,
+            Pageable pageable) {
+        try {
+            logger.debug("Searching users by username: {} - page: {}, size: {}", 
+                username, pageable.getPageNumber(), pageable.getPageSize());
+            Page<UserDTO> users = userService.searchUsersByUsername(username, pageable)
+                    .map(this::convertToDTO);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            logger.error("Error searching users by username: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
+    /**
+     * Advanced search for users with pagination.
+     *
+     * @param username optional username to search for
+     * @param email optional email to search for
+     * @param active optional active status to search for
+     * @param role optional role to search for
+     * @param pageable pagination information
+     * @return page of matching users
+     */
+    @GetMapping("/advanced-search")
+    @Operation(summary = "Advanced search for users with pagination")
+    public ResponseEntity<Page<UserDTO>> advancedSearch(
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) String role,
+            Pageable pageable) {
+        try {
+            logger.debug("Advanced search - username: {}, email: {}, active: {}, role: {} - page: {}, size: {}", 
+                username, email, active, role, pageable.getPageNumber(), pageable.getPageSize());
+            Page<UserDTO> users = userService.searchUsers(username, email, active, role, pageable)
+                    .map(this::convertToDTO);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            logger.error("Error performing advanced search: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Gets paginated users.
+     *
+     * @param pageable pagination information
+     * @return page of users
+     */
     @GetMapping("/paginated")
     @Operation(summary = "Get paginated users")
-    public Page<UserDTO> getUsersPaginated(Pageable pageable) {
-        return userService.getUsersPaginated(pageable).map(this::convertToDTO);
+    public ResponseEntity<Page<UserDTO>> getUsersPaginated(Pageable pageable) {
+        try {
+            logger.debug("Fetching paginated users: page {}, size {}", 
+                pageable.getPageNumber(), pageable.getPageSize());
+            Page<UserDTO> users = userService.getUsersPaginated(pageable).map(this::convertToDTO);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            logger.error("Error fetching paginated users: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
+    /**
+     * Updates a user's password.
+     *
+     * @param id the user ID
+     * @param passwordUpdate the password update request
+     * @return the updated user
+     */
     @PutMapping("/{id}/password")
     @RateLimiter(name = "updatePassword")
     @Operation(summary = "Update password")
     public ResponseEntity<UserDTO> updatePassword(@PathVariable @Min(1) Long id,
-                                                @Valid @RequestBody PasswordUpdateDTO passwordUpdateDTO) {
-        User updatedUser = userService.updatePassword(id, 
-                passwordUpdateDTO.getOldPassword(),
-                passwordUpdateDTO.getNewPassword());
-        return ResponseEntity.ok(convertToDTO(updatedUser));
+                                                @Valid @RequestBody PasswordUpdate passwordUpdate) {
+        try {
+            logger.debug("Updating password for user with ID: {}", id);
+            User updatedUser = userService.updatePassword(id, 
+                    passwordUpdate.getOldPassword(),
+                    passwordUpdate.getNewPassword());
+            logger.info("Password updated successfully for user with ID: {}", id);
+            return ResponseEntity.ok(convertToDTO(updatedUser));
+        } catch (UserNotFoundException e) {
+            logger.warn("Failed to update password: {}", e.getMessage());
+            throw e;
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid password update attempt for user ID {}: {}", id, e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error updating password for user ID {}: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
+    /**
+     * Gets a user with circuit breaker protection.
+     *
+     * @param id the user ID
+     * @return the user with the given ID
+     */
     @GetMapping("/circuit-test/{id}")
     @Operation(summary = "Get user with circuit breaker")
     public ResponseEntity<UserDTO> getUserWithCircuitBreaker(@PathVariable @Min(1) Long id) {
-        User user = userService.getUserByIdWithCircuitBreaker(id);
-        return ResponseEntity.ok(convertToDTO(user));
+        try {
+            logger.debug("Fetching user with circuit breaker, ID: {}", id);
+            User user = userService.getUserByIdWithCircuitBreaker(id);
+            return ResponseEntity.ok(convertToDTO(user));
+        } catch (Exception e) {
+            logger.error("Error in circuit breaker test for user ID {}: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
-    @Operation(summary = "Get all active users")
+    /**
+     * Gets all active users with pagination.
+     *
+     * @param pageable pagination information
+     * @return page of active users
+     */
+    @Operation(summary = "Get all active users with pagination")
     @GetMapping("/active")
-    public ResponseEntity<List<UserDTO>> getActiveUsers() {
-        List<UserDTO> users = userService.getActiveUsers().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(users);
+    public ResponseEntity<Page<UserDTO>> getActiveUsers(Pageable pageable) {
+        try {
+            logger.debug("Fetching active users - page: {}, size: {}", 
+                pageable.getPageNumber(), pageable.getPageSize());
+            Page<UserDTO> users = userService.getActiveUsers(pageable)
+                    .map(this::convertToDTO);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            logger.error("Error fetching active users: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
-    @Operation(summary = "Get all inactive users")
+    /**
+     * Gets all inactive users with pagination.
+     *
+     * @param pageable pagination information
+     * @return page of inactive users
+     */
+    @Operation(summary = "Get all inactive users with pagination")
     @GetMapping("/inactive")
-    public ResponseEntity<List<UserDTO>> getInactiveUsers() {
-        List<UserDTO> users = userService.getInactiveUsers().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(users);
+    public ResponseEntity<Page<UserDTO>> getInactiveUsers(Pageable pageable) {
+        try {
+            logger.debug("Fetching inactive users - page: {}, size: {}", 
+                pageable.getPageNumber(), pageable.getPageSize());
+            Page<UserDTO> users = userService.getInactiveUsers(pageable)
+                    .map(this::convertToDTO);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            logger.error("Error fetching inactive users: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
-    @Operation(summary = "Get users by email domain")
+    /**
+     * Gets users by email domain with pagination.
+     *
+     * @param domain the email domain
+     * @param pageable pagination information
+     * @return page of users with the given email domain
+     */
+    @Operation(summary = "Get users by email domain with pagination")
     @GetMapping("/by-domain")
-    public ResponseEntity<List<UserDTO>> getUsersByEmailDomain(
-            @RequestParam @NotBlank String domain) {
-        List<UserDTO> users = userService.getUsersByEmailDomain(domain).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(users);
+    public ResponseEntity<Page<UserDTO>> getUsersByEmailDomain(
+            @RequestParam @NotBlank String domain,
+            Pageable pageable) {
+        try {
+            logger.debug("Fetching users with email domain: {} - page: {}, size: {}", 
+                domain, pageable.getPageNumber(), pageable.getPageSize());
+            Page<UserDTO> users = userService.getUsersByEmailDomain(domain, pageable)
+                    .map(this::convertToDTO);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            logger.error("Error fetching users by email domain: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
-    @Operation(summary = "Get users by role")
+    /**
+     * Gets users by role with pagination.
+     *
+     * @param role the role
+     * @param pageable pagination information
+     * @return page of users with the given role
+     */
+    @Operation(summary = "Get users by role with pagination")
     @GetMapping("/by-role")
-    public ResponseEntity<List<UserDTO>> getUsersByRole(
-            @RequestParam @NotBlank String role) {
-        List<UserDTO> users = userService.getUsersByRole(role).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(users);
+    public ResponseEntity<Page<UserDTO>> getUsersByRole(
+            @RequestParam @NotBlank String role,
+            Pageable pageable) {
+        try {
+            logger.debug("Fetching users with role: {} - page: {}, size: {}", 
+                role, pageable.getPageNumber(), pageable.getPageSize());
+            Page<UserDTO> users = userService.getUsersByRole(role, pageable)
+                    .map(this::convertToDTO);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            logger.error("Error fetching users by role: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
-    @Operation(summary = "Get users with minimum number of roles")
+    /**
+     * Gets users with a minimum number of roles with pagination.
+     *
+     * @param minRoles the minimum number of roles
+     * @param pageable pagination information
+     * @return page of users with at least the given number of roles
+     */
+    @Operation(summary = "Get users with minimum number of roles with pagination")
     @GetMapping("/by-min-roles")
-    public ResponseEntity<List<UserDTO>> getUsersByMinimumRoles(
-            @RequestParam @Min(1) int minRoles) {
-        List<UserDTO> users = userService.getUsersByMinimumRoles(minRoles).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(users);
+    public ResponseEntity<Page<UserDTO>> getUsersByMinimumRoles(
+            @RequestParam @Min(1) int minRoles,
+            Pageable pageable) {
+        try {
+            logger.debug("Fetching users with minimum {} roles - page: {}, size: {}", 
+                minRoles, pageable.getPageNumber(), pageable.getPageSize());
+            Page<UserDTO> users = userService.getUsersByMinimumRoles(minRoles, pageable)
+                    .map(this::convertToDTO);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            logger.error("Error fetching users by minimum roles: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
-    @Operation(summary = "Search users by multiple criteria")
+    /**
+     * Searches for users by multiple criteria with pagination.
+     *
+     * @param username the username to search for (optional)
+     * @param email the email to search for (optional)
+     * @param active the active status to search for (optional)
+     * @param role the role to search for (optional)
+     * @param pageable pagination information
+     * @return page of matching users
+     */
+    @Operation(summary = "Search users by multiple criteria with pagination")
     @GetMapping("/search/advanced")
-    public ResponseEntity<List<UserDTO>> searchUsers(
+    public ResponseEntity<Page<UserDTO>> searchUsers(
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) String role) {
-        List<UserDTO> users = userService.searchUsers(username, email, active, role).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(users);
+            @RequestParam(required = false) String role,
+            Pageable pageable) {
+        try {
+            logger.debug("Advanced search - username: {}, email: {}, active: {}, role: {} - page: {}, size: {}", 
+                username, email, active, role, pageable.getPageNumber(), pageable.getPageSize());
+            Page<UserDTO> users = userService.searchUsers(username, email, active, role, pageable)
+                    .map(this::convertToDTO);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            logger.error("Error in advanced user search: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -213,7 +457,17 @@ public class UserController {
     public ResponseEntity<UserDTO> updateUserRoles(
             @PathVariable @Min(1) Long id,
             @Valid @RequestBody UpdateRolesDTO rolesDTO) {
-        User updatedUser = userService.updateUserRoles(id, rolesDTO.getRoles());
-        return ResponseEntity.ok(convertToDTO(updatedUser));
+        try {
+            logger.debug("Updating roles for user with ID: {}", id);
+            User updatedUser = userService.updateUserRoles(id, rolesDTO.getRoles());
+            logger.info("Roles updated successfully for user with ID: {}", id);
+            return ResponseEntity.ok(convertToDTO(updatedUser));
+        } catch (UserNotFoundException e) {
+            logger.warn("Failed to update roles: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error updating roles for user ID {}: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 }

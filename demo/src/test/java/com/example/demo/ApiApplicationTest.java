@@ -15,12 +15,10 @@ class ApiApplicationTest {
 
     @Test
     void contextLoads() {
-        // Test that the Spring context loads successfully
     }
 
     @Test
     void mainMethodStartsApplication() {
-        // Test the main method can be called without throwing exceptions
         ApiApplication.main(new String[]{});
     }
 } 
