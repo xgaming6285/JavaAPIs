@@ -1,6 +1,7 @@
 package com.example.demo;
 
-public class UserDTO {
+/** Data Transfer Object for User entity. */
+public final class UserDTO {
     private Long id;
     private String username;
     private String email;

@@ -7,15 +7,30 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Service for tracking and analyzing user activity metrics.
+ */
 @Service
 public class UserActivityService {
+    private static final int LOCKOUT_THRESHOLD = 5;
+    private static final int TOP_USERS_LIMIT = 10;
+    
     private final UserService userService;
-    private final Map<String, Integer> loginAttempts = new HashMap<>();
-    private final Map<Long, LocalDateTime> lastLoginTimes = new HashMap<>();
-    private final Map<Long, List<String>> userActivities = new HashMap<>();
+    private final Map<String, Integer> loginAttempts;
+    private final Map<Long, LocalDateTime> lastLoginTimes;
+    private final Map<Long, List<String>> userActivities;
 
+    /**
+     * Creates a new UserActivityService.
+     *
+     * @param userService the user service to use
+     * @throws NullPointerException if userService is null
+     */
     public UserActivityService(UserService userService) {
         this.userService = Objects.requireNonNull(userService, "UserService must not be null");
+        this.loginAttempts = new HashMap<>();
+        this.lastLoginTimes = new HashMap<>();
+        this.userActivities = new HashMap<>();
     }
 
     @Cacheable(value = "activityTrends", key = "#startDate")
@@ -132,7 +147,7 @@ public class UserActivityService {
 
     private int getAccountLockouts() {
         return (int) loginAttempts.values().stream()
-            .filter(attempts -> attempts >= 5)
+            .filter(attempts -> attempts >= LOCKOUT_THRESHOLD)
             .count();
     }
 
@@ -193,7 +208,7 @@ public class UserActivityService {
     private List<Map<String, Object>> getMostActiveUsers() {
         return userActivities.entrySet().stream()
             .sorted((e1, e2) -> Integer.compare(e2.getValue().size(), e1.getValue().size()))
-            .limit(10)
+            .limit(TOP_USERS_LIMIT)
             .map(entry -> {
                 Map<String, Object> userStats = new HashMap<>();
                 userStats.put("userId", entry.getKey());

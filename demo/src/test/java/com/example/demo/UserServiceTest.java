@@ -43,12 +43,11 @@ class UserServiceTest {
         testUser.setRoles(Set.of("ROLE_USER"));
         testUser.setActive(true);
         
-        // Inject the spied maps into the service
-        userService = new UserService();
+        // Create service with mocked dependencies
+        userService = new UserService(userRepository, passwordEncoder);
+        // Replace the default maps with our spied versions
         userService.userCache = userCache;
         userService.verificationTokenCache = verificationTokenCache;
-        userService.userRepository = userRepository;
-        userService.passwordEncoder = passwordEncoder;
     }
 
     @Test

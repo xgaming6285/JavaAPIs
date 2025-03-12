@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+/** Repository interface for User entity operations. */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
@@ -25,15 +26,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE SIZE(u.roles) > :minRoles")
     List<User> findByMinimumRoles(@Param("minRoles") int minRoles);
     
-    @Query("SELECT u FROM User u WHERE " +
-           "(:username IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))) AND " +
-           "(:email IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND " +
-           "(:active IS NULL OR u.active = :active) AND " +
-           "(:role IS NULL OR :role MEMBER OF u.roles)")
+    @Query(
+        "SELECT u FROM User u WHERE "
+            + "(:username IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))) AND "
+            + "(:email IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND "
+            + "(:active IS NULL OR u.active = :active) AND "
+            + "(:role IS NULL OR :role MEMBER OF u.roles)")
     List<User> findByMultipleCriteria(
         @Param("username") String username,
         @Param("email") String email,
         @Param("active") Boolean active,
-        @Param("role") String role
-    );
+        @Param("role") String role);
 }

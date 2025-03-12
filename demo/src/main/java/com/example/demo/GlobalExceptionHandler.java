@@ -3,6 +3,7 @@ package com.example.demo;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -10,6 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.WebRequest;
+
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 /**
  * Global exception handler for centralizing exception handling across the application.
@@ -90,6 +95,47 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles constraint violation exceptions.
+     *
+     * @param ex The constraint violation exception
+     * @param request The web request
+     * @return ResponseEntity containing error details
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ApiResponse(responseCode = "400", description = "Constraint Violation", 
+                content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(
+            ConstraintViolationException ex,
+            WebRequest request) {
+        
+        String errorMessage = ex.getConstraintViolations().stream()
+            .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+            .collect(Collectors.joining(", "));
+            
+        if (logger.isWarnEnabled()) {
+            logger.warn("Constraint violation: {}", errorMessage);
+        }
+        
+        return createErrorResponse(errorMessage, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Handles illegal argument exceptions.
+     *
+     * @param ex The illegal argument exception
+     * @return ResponseEntity containing error details
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ApiResponse(responseCode = "400", description = "Invalid Argument", 
+                content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        if (logger.isWarnEnabled()) {
+            logger.warn("Invalid argument: {}", ex.getMessage());
+        }
+        return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * Handles all unhandled exceptions.
      *
      * @param ex The exception to handle
@@ -113,7 +159,8 @@ public class GlobalExceptionHandler {
      * @return ResponseEntity containing error details
      */
     private ResponseEntity<ErrorResponse> createErrorResponse(String message, HttpStatus status) {
-        return ResponseEntity.status(status)
-                           .body(new ErrorResponse(message, status.value()));
+        ErrorResponse errorResponse = new ErrorResponse(message, status.value());
+        errorResponse.setTimestamp(LocalDateTime.now());
+        return ResponseEntity.status(status).body(errorResponse);
     }
 }

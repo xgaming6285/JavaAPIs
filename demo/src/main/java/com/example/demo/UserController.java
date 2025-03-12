@@ -21,15 +21,26 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Objects;
 
+/**
+ * REST controller for managing user operations.
+ */
 @RestController
 @RequestMapping("/api/v1/users")
 @Tag(name = "User Management")
 @Validated
 public class UserController {
-    private final Logger logger = LoggerFactory.getLogger(UserController.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    
     private final Counter userCreationCounter;
     private final UserService userService;
 
+    /**
+     * Creates a new UserController.
+     *
+     * @param userService the user service to use
+     * @param registry the meter registry for metrics
+     * @throws NullPointerException if either parameter is null
+     */
     public UserController(UserService userService, MeterRegistry registry) {
         this.userService = Objects.requireNonNull(userService, "UserService must not be null");
         Objects.requireNonNull(registry, "MeterRegistry must not be null");
@@ -190,6 +201,13 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    /**
+     * Updates roles for a user.
+     *
+     * @param id the user ID
+     * @param rolesDTO the roles to update
+     * @return the updated user
+     */
     @PutMapping("/{id}/roles")
     @Operation(summary = "Update user roles")
     public ResponseEntity<UserDTO> updateUserRoles(

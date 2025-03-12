@@ -27,7 +27,7 @@ import java.util.Set;
     @Index(name = "idx_username", columnList = "username"),
     @Index(name = "idx_email", columnList = "email")
 })
-public class User {
+public final class User {
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -232,8 +232,12 @@ public class User {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         User user = (User) o;
         
         // If both IDs are not null, compare only IDs
@@ -243,15 +247,14 @@ public class User {
         
         // If both IDs are null, compare all fields
         if (id == null && user.id == null) {
-            return Objects.equals(username, user.username) &&
-                   Objects.equals(email, user.email) &&
-                   Objects.equals(password, user.password) &&
-                   Objects.equals(token, user.token) &&
-                   active == user.active &&
-                   Objects.equals(roles, user.roles);
+            return Objects.equals(username, user.username)
+                    && Objects.equals(email, user.email)
+                    && Objects.equals(password, user.password)
+                    && Objects.equals(token, user.token)
+                    && active == user.active
+                    && Objects.equals(roles, user.roles);
         }
         
-        // If one ID is null and the other isn't, they're not equal
         return false;
     }
 
@@ -267,13 +270,8 @@ public class User {
 
     @Override
     public String toString() {
-        return "User{"
-                + "id=" + id
-                + ", username='" + username + '\''
-                + ", email='" + email + '\''
-                + ", active=" + active
-                + ", roles=" + roles
-                + '}';
+        return String.format("User{id=%d, username='%s', email='%s', active=%b, roles=%s}",
+            id, username, email, active, roles);
     }
 
     /**
@@ -288,7 +286,7 @@ public class User {
     /**
      * Builder class for creating User instances.
      */
-    public static class UserBuilder {
+    public static final class UserBuilder {
         private String username;
         private String email;
         private String password;

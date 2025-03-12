@@ -14,10 +14,10 @@
 			<url>https://jcenter.bintray.com</url>
 		</repository>
 	</repositories>
-	<groupId>com.example</groupId>
-	<artifactId>demo</artifactId>
+	<groupId>com.usermanagement</groupId>
+	<artifactId>user-management-api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>demo</name>
+	<name>user-management-api</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>

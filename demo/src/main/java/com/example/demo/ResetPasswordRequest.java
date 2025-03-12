@@ -4,21 +4,26 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * Request object for password reset initiation.
+ * Request object for initiating password reset operations.
+ *
+ * <p>This class handles password reset requests containing the user's email address.
  */
-public class ResetPasswordRequest {
-  @NotBlank(message = "Email is required")
-  @Email(message = "Email should be valid")
-  private String email;
+public final class ResetPasswordRequest {
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email must be valid")
+    private String email;
 
-  // Default constructor
-  public ResetPasswordRequest() {}
+    public ResetPasswordRequest() {}
 
-  public String getEmail() {
-    return email;
-  }
+    public ResetPasswordRequest(String email) {
+        this.email = email;
+    }
 
-  public void setEmail(String email) {
-    this.email = email;
-  }
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
 } 

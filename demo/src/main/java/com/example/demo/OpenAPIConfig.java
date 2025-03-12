@@ -10,9 +10,17 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
+/**
+ * Configuration class for OpenAPI documentation.
+ */
 @Configuration
 public class OpenAPIConfig {
 
+    /**
+     * Creates and configures the main OpenAPI documentation object.
+     *
+     * @return configured OpenAPI instance
+     */
     @Bean
     public OpenAPI myOpenAPI() {
         Server devServer = new Server()
@@ -34,6 +42,11 @@ public class OpenAPIConfig {
                 .servers(List.of(devServer));
     }
 
+    /**
+     * Configures the User Management API group.
+     *
+     * @return GroupedOpenApi instance for user management endpoints
+     */
     @Bean
     public GroupedOpenApi userApis() {
         return GroupedOpenApi.builder()
@@ -42,6 +55,11 @@ public class OpenAPIConfig {
                 .build();
     }
 
+    /**
+     * Configures the Authentication API group.
+     *
+     * @return GroupedOpenApi instance for authentication endpoints
+     */
     @Bean
     public GroupedOpenApi authApis() {
         return GroupedOpenApi.builder()
@@ -50,6 +68,11 @@ public class OpenAPIConfig {
                 .build();
     }
 
+    /**
+     * Configures the Health API group.
+     *
+     * @return GroupedOpenApi instance for health check endpoints
+     */
     @Bean
     public GroupedOpenApi healthApis() {
         return GroupedOpenApi.builder()
@@ -58,6 +81,11 @@ public class OpenAPIConfig {
                 .build();
     }
 
+    /**
+     * Configures the Analytics API group.
+     *
+     * @return GroupedOpenApi instance for analytics endpoints
+     */
     @Bean
     public GroupedOpenApi analyticsApis() {
         return GroupedOpenApi.builder()

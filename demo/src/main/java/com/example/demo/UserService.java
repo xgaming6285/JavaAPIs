@@ -21,20 +21,30 @@ import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.util.HashMap;
 
+/** Service class for managing user operations. */
 @Service
 public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private static final String USER_NOT_FOUND = "User not found";
 
+    /* package */ UserRepository userRepository;
+    /* package */ PasswordEncoder passwordEncoder;
+    /* package */ AtomicInteger failureCounter;
+    /* package */ Map<Long, User> userCache;
+    /* package */ Map<Long, String> verificationTokenCache;
+
+    /* package */ UserService() {
+        this.failureCounter = new AtomicInteger(0);
+        this.userCache = new ConcurrentHashMap<>();
+        this.verificationTokenCache = new ConcurrentHashMap<>();
+    }
+
     @Autowired
-    protected UserRepository userRepository;
-    
-    @Autowired
-    protected PasswordEncoder passwordEncoder;
-    
-    private final AtomicInteger failureCounter = new AtomicInteger(0);
-    protected Map<Long, User> userCache = new ConcurrentHashMap<>();
-    protected Map<Long, String> verificationTokenCache = new ConcurrentHashMap<>();
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this();
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
