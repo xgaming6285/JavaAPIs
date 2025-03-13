@@ -24,7 +24,10 @@ public class SecurityConfig {
         "/api/auth/verify",
         "/api/auth/reset-password",
         "/swagger-ui/**",
-        "/v3/api-docs/**"
+        "/swagger-ui.html",
+        "/v3/api-docs/**",
+        "/v3/api-docs/swagger-config",
+        "/webjars/**"
     };
     
     /**

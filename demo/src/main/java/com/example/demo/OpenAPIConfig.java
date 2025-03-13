@@ -7,11 +7,15 @@ import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
 @Configuration
 public class OpenAPIConfig {
+
+    @Value("${server.url:http://localhost:8080}")
+    private String serverUrl;
 
     /**
      * Creates and configures the main OpenAPI documentation object.
@@ -21,7 +25,7 @@ public class OpenAPIConfig {
     @Bean
     public OpenAPI myOpenAPI() {
         Server devServer = new Server()
-                .url("http://localhost:8080")
+                .url(serverUrl)
                 .description("Server URL in Development environment");
 
         Contact contact = new Contact()
