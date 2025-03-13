@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -30,6 +31,9 @@ public final class User {
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    private Long version;
 
     @NotBlank
     @Size(min = 3, max = 50)
@@ -382,5 +386,9 @@ public final class User {
         user.setUsername(dto.getUsername());
         user.setEmail(dto.getEmail());
         return user;
+    }
+
+    public Long getVersion() {
+        return version;
     }
 }

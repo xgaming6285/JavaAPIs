@@ -1,17 +1,16 @@
 package com.example.demo.config;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.lang.NonNull;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.*;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.http.CacheControl;
+import org.springframework.lang.NonNull;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -24,10 +23,16 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/**")
-                .addResourceLocations("classpath:/static/");
+                .addResourceLocations("classpath:/static/")
+                .setCacheControl(CacheControl.maxAge(365, TimeUnit.DAYS)
+                        .mustRevalidate()
+                        .cachePublic());
         
         registry.addResourceHandler("/swagger-ui/**")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/springdoc-openapi-ui/")
+                .setCacheControl(CacheControl.maxAge(365, TimeUnit.DAYS)
+                        .mustRevalidate()
+                        .cachePublic())
                 .resourceChain(false);
     }
 

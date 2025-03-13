@@ -13,11 +13,13 @@ import io.micrometer.core.instrument.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.CacheControl;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -70,7 +72,9 @@ public class UserController {
                 pageable.getPageNumber(), pageable.getPageSize());
             Page<UserDTO> users = userService.getAllUsers(pageable)
                     .map(this::convertToDTO);
-            return ResponseEntity.ok(users);
+            return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(15, TimeUnit.MINUTES))
+                .body(users);
         } catch (Exception e) {
             logger.error("Error fetching all users: {}", e.getMessage(), e);
             throw e;
@@ -89,7 +93,10 @@ public class UserController {
     public ResponseEntity<UserDTO> getUserById(@PathVariable @Min(1) Long id) {
         logger.debug("Fetching user with ID: {}", id);
         return userService.getUserById(id)
-                .map(user -> ResponseEntity.ok(convertToDTO(user)))
+                .map(user -> ResponseEntity.ok()
+                    .cacheControl(CacheControl.maxAge(30, TimeUnit.MINUTES))
+                    .eTag(String.valueOf(user.getVersion()))
+                    .body(convertToDTO(user)))
                 .orElseThrow(() -> {
                     logger.warn("User not found with ID: {}", id);
                     return new UserNotFoundException(String.format(USER_NOT_FOUND_MSG, id));
@@ -467,6 +474,52 @@ public class UserController {
             throw e;
         } catch (Exception e) {
             logger.error("Error updating roles for user ID {}: {}", id, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Gets a user summary by ID.
+     *
+     * @param id the user ID
+     * @return the user summary with the given ID
+     * @throws UserNotFoundException if no user is found with the given ID
+     */
+    @Operation(summary = "Get user summary by ID")
+    @GetMapping("/{id}/summary")
+    public ResponseEntity<UserSummaryDTO> getUserSummaryById(@PathVariable @Min(1) Long id) {
+        logger.debug("Fetching user summary with ID: {}", id);
+        return userService.getUserById(id)
+                .map(user -> ResponseEntity.ok()
+                    .cacheControl(CacheControl.maxAge(30, TimeUnit.MINUTES))
+                    .eTag(String.valueOf(user.getVersion()))
+                    .body(UserSummaryDTO.fromUser(user)))
+                .orElseThrow(() -> {
+                    logger.warn("User not found with ID: {}", id);
+                    return new UserNotFoundException(String.format(USER_NOT_FOUND_MSG, id));
+                });
+    }
+
+    /**
+     * Gets all user summaries with pagination.
+     *
+     * @param pageable pagination information
+     * @return page of all user summaries
+     */
+    @Timed(value = "api.getAllUserSummaries.time")
+    @Operation(summary = "Get all user summaries with pagination")
+    @GetMapping("/summaries")
+    public ResponseEntity<Page<UserSummaryDTO>> getAllUserSummaries(Pageable pageable) {
+        try {
+            logger.debug("Fetching all user summaries - page: {}, size: {}", 
+                pageable.getPageNumber(), pageable.getPageSize());
+            Page<UserSummaryDTO> users = userService.getAllUsers(pageable)
+                    .map(UserSummaryDTO::fromUser);
+            return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(15, TimeUnit.MINUTES))
+                .body(users);
+        } catch (Exception e) {
+            logger.error("Error fetching all user summaries: {}", e.getMessage(), e);
             throw e;
         }
     }
